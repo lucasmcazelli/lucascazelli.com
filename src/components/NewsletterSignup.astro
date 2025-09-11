@@ -1,0 +1,32 @@
+---
+export interface Props {
+  action?: string; // Substack or form endpoint
+  placeholder?: string;
+  cta?: string;
+}
+
+const { action = "https://substack.com/subscribe", placeholder = "Your email", cta = "Subscribe" } = Astro.props as Props;
+---
+
+<form
+  action={action}
+  method="post"
+  target="_blank"
+  class="flex w-full max-w-md items-center gap-2"
+>
+  <input
+    type="email"
+    name="email"
+    required
+    placeholder={placeholder}
+    class="flex-1 rounded border border-muted bg-background px-3 py-2 text-sm"
+  />
+  <button
+    type="submit"
+    class="rounded bg-accent px-4 py-2 text-sm font-medium text-background hover:opacity-90"
+  >
+    {cta}
+  </button>
+</form>
+
+

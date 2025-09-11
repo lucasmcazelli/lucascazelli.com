@@ -1,0 +1,68 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import SEOHead from "@/components/SEOHead.astro";
+import NewsletterSignup from "@/components/NewsletterSignup.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
+import ShareButtons from "@/components/ShareButtons.astro";
+import Datetime from "@/components/Datetime.astro";
+
+export interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+export interface Props {
+  title: string;
+  description: string;
+  pubDatetime?: Date;
+  modDatetime?: Date | null;
+  ogImage?: string;
+  canonicalURL?: string;
+  headings?: Heading[];
+  tags?: string[];
+  type?: string;
+}
+
+const {
+  title,
+  description,
+  pubDatetime,
+  modDatetime,
+  ogImage,
+  canonicalURL,
+  headings = [],
+  tags = [],
+  type = "article",
+} = Astro.props as Props;
+---
+
+<Layout {title} {description} {pubDatetime} {modDatetime} {ogImage} {canonicalURL}>
+  <fragment slot="head">
+    <SEOHead {title} {description} publishDate={pubDatetime} {tags} {type} {ogImage} {canonicalURL} {modDatetime} />
+  </fragment>
+  <main class="mx-auto w-full max-w-app px-4 pb-12">
+    <h1 class="mt-8 text-3xl font-bold text-accent">{title}</h1>
+    {pubDatetime && (
+      <div class="mt-2">
+        <Datetime pubDatetime={pubDatetime} modDatetime={modDatetime} timezone={undefined} />
+      </div>
+    )}
+    <div class="mt-6 grid grid-cols-1 gap-8 md:grid-cols-[1fr_280px]">
+      <article class="app-prose max-w-app">
+        <slot />
+      </article>
+      <aside class="md:sticky md:top-20 md:h-min">
+        <TableOfContents headings={headings} />
+        <div class="mt-6">
+          <ShareButtons />
+        </div>
+        <div class="mt-8">
+          <NewsletterSignup />
+        </div>
+      </aside>
+    </div>
+  </main>
+</Layout>
+
+

@@ -1,0 +1,36 @@
+---
+title: System 1 vs System 2 in Product Decisions
+description: How fast intuition and slow analysis shape product strategy and experimentation.
+pubDatetime: 2025-09-01T10:00:00.000Z
+tags:
+  - product
+  - decision-making
+category: product
+readTime: 6
+draft: false
+---
+
+import BlogPost from "@/layouts/BlogPost.astro";
+
+export const headings = [
+  { depth: 2, slug: "system-1", text: "System 1: Fast and Intuitive" },
+  { depth: 2, slug: "system-2", text: "System 2: Slow and Deliberate" },
+  { depth: 2, slug: "how-to-apply", text: "How to Apply in Product" },
+];
+
+<BlogPost title={frontmatter.title} description={frontmatter.description} pubDatetime={new Date(frontmatter.pubDatetime)} tags={frontmatter.tags} headings={headings}>
+
+## <span id="system-1">System 1: Fast and Intuitive</span>
+Quick heuristics drive velocity. Useful for small UX tweaks and low-risk calls.
+
+## <span id="system-2">System 2: Slow and Deliberate</span>
+Structured analysis drives confidence. Use for pricing, architecture and bets.
+
+## <span id="how-to-apply">How to Apply in Product</span>
+- Start with System 1 to generate options
+- Switch to System 2 for irreversible or high-impact choices
+- Instrument decisions and learn
+
+</BlogPost>
+
+
