@@ -9,8 +9,11 @@ import getSortedPosts from "@/utils/getSortedPosts";
 const posts = await getCollection("blog");
 const sortedPosts = getSortedPosts(posts);
 
+// Filter out draft posts
+const publishedPosts = sortedPosts.filter(post => !post.data.draft);
+
 // Convert to the format expected by KnowledgeGraph
-const graphPosts = sortedPosts.map(post => ({
+const graphPosts = publishedPosts.map(post => ({
   slug: post.id,
   data: {
     title: post.data.title,

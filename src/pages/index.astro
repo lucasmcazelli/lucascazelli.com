@@ -17,8 +17,10 @@ import { SOCIALS } from "@/constants";
 const posts = await getCollection("blog");
 
 const sortedPosts = getSortedPosts(posts);
-const featuredPosts = sortedPosts.filter(({ data }) => data.featured);
-const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
+// Filter out draft posts
+const publishedPosts = sortedPosts.filter(post => !post.data.draft);
+const featuredPosts = publishedPosts.filter(({ data }) => data.featured);
+const recentPosts = publishedPosts.filter(({ data }) => !data.featured);
 ---
 
 <Layout>
@@ -122,7 +124,7 @@ const recentPosts = sortedPosts.filter(({ data }) => !data.featured);
       <!-- Mini Knowledge Graph -->
       <div class="bg-muted/20 rounded-lg border border-muted p-6">
         <KnowledgeGraph 
-          posts={sortedPosts.map(post => ({
+          posts={publishedPosts.map(post => ({
             slug: post.id,
             data: {
               title: post.data.title,
