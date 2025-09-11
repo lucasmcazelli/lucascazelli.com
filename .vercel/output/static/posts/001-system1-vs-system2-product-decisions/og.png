@@ -1,0 +1,14 @@
+
+          <svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+            <rect width="1200" height="630" fill="#1a1a1a"/>
+            <text x="600" y="250" font-family="Arial, sans-serif" font-size="36" fill="white" text-anchor="middle">
+              System 1 vs System 2
+            </text>
+            <text x="600" y="320" font-family="Arial, sans-serif" font-size="24" fill="white" text-anchor="middle">
+              Product Decisions
+            </text>
+            <text x="600" y="450" font-family="Arial, sans-serif" font-size="18" fill="#888" text-anchor="middle">
+              Lucas Cazelli • lucascazelli.com
+            </text>
+          </svg>
+        
