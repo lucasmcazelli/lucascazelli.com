@@ -1,0 +1,104 @@
+---
+export interface Props {
+  type: "scatter" | "bar" | "line" | "table";
+  data: Array<{ x?: number; y?: number; label?: string; value?: number; [key: string]: any }>;
+  title?: string;
+  xLabel?: string;
+  yLabel?: string;
+}
+
+const { type, data, title, xLabel = "X", yLabel = "Y" } = Astro.props;
+
+// Simple data visualization component
+// In a real implementation, you'd integrate with a charting library like Chart.js or D3
+---
+
+<div class="my-6 rounded-lg border border-muted bg-muted/20 p-6">
+  {title && <h3 class="mb-4 text-lg font-semibold text-accent">{title}</h3>}
+  
+  {type === "scatter" && (
+    <div class="space-y-2">
+      <div class="text-sm text-muted-foreground">
+        {xLabel} vs {yLabel}
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        {data.map((point, i) => (
+          <div class="rounded border p-3 text-center">
+            <div class="text-sm font-medium">{point.label || `Point ${i + 1}`}</div>
+            <div class="text-xs text-muted-foreground">
+              {xLabel}: {point.x}, {yLabel}: {point.y}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {type === "bar" && (
+    <div class="space-y-2">
+      <div class="text-sm text-muted-foreground">Bar Chart</div>
+      <div class="flex items-end gap-2">
+        {data.map((bar, i) => (
+          <div class="flex flex-col items-center">
+            <div 
+              class="w-8 bg-accent rounded-t"
+              style={`height: ${(bar.value || bar.y || 0) * 100}px`}
+            ></div>
+            <div class="mt-2 text-xs text-center">{bar.label || `Bar ${i + 1}`}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {type === "line" && (
+    <div class="space-y-2">
+      <div class="text-sm text-muted-foreground">Line Chart</div>
+      <div class="h-32 flex items-end">
+        <div class="flex-1 flex items-end justify-between">
+          {data.map((point) => (
+            <div class="flex flex-col items-center">
+              <div 
+                class="w-1 bg-accent rounded-t"
+                style={`height: ${(point.y || 0) * 100}px`}
+              ></div>
+              <div class="mt-1 text-xs">{point.label || point.x}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  {type === "table" && (
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b">
+            {Object.keys(data[0] || {}).map(key => (
+              <th class="p-2 text-left font-medium">{key}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row) => (
+            <tr class="border-b">
+              {Object.values(row).map((value) => (
+                <td class="p-2">{String(value)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
+
+<style>
+  /* Add any custom chart styling here */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+  }
+</style>
