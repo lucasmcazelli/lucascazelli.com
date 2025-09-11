@@ -7,6 +7,7 @@ import IconWhatsapp from "@/assets/icons/IconWhatsapp.svg";
 import IconFacebook from "@/assets/icons/IconFacebook.svg";
 import IconTelegram from "@/assets/icons/IconTelegram.svg";
 import IconPinterest from "@/assets/icons/IconPinterest.svg";
+import IconHash from "@/assets/icons/IconHash.svg";
 import { SITE } from "@/config";
 
 interface Social {
@@ -24,16 +25,34 @@ export const SOCIALS: Social[] = [
     icon: IconGitHub,
   },
   {
+    name: "LinkedIn",
+    href: "https://www.linkedin.com/in/lucascazelli",
+    linkTitle: `${SITE.title} on LinkedIn`,
+    icon: IconLinkedin,
+  },
+  {
     name: "X",
-    href: "https://x.com/lucascazelli",
-    linkTitle: `${SITE.title} on X`,
+    href: "https://twitter.com/othelucas",
+    linkTitle: `${SITE.title} on X (Twitter)`,
     icon: IconBrandX,
   },
   {
-    name: "LinkedIn",
-    href: "https://www.linkedin.com/in/lucascazelli/",
-    linkTitle: `${SITE.title} on LinkedIn`,
-    icon: IconLinkedin,
+    name: "Bluesky",
+    href: "https://bsky.app/profile/lucascazelli.bsky.social",
+    linkTitle: `${SITE.title} on Bluesky`,
+    icon: IconBrandX, // Using X icon as placeholder
+  },
+  {
+    name: "Medium",
+    href: "https://medium.com/@lucas.mcazelli",
+    linkTitle: `${SITE.title} on Medium`,
+    icon: IconMail, // Using mail icon as placeholder
+  },
+  {
+    name: "Quora",
+    href: "https://www.quora.com/profile/Lucas-Mischiatti-Cazelli",
+    linkTitle: `${SITE.title} on Quora`,
+    icon: IconHash, // Using hash icon as placeholder
   },
   {
     name: "Mail",
