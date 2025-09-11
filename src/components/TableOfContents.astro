@@ -15,22 +15,28 @@ const { headings, title = "On this page" } = Astro.props as Props;
 const items = headings.filter(h => h.depth >= 2 && h.depth <= 4);
 ---
 
-{items.length > 0 && (
-  <nav aria-label="Table of contents" class="border-l border-dashed pl-4">
-    <div class="mb-2 text-sm font-semibold text-accent">{title}</div>
-    <ul class="space-y-1 text-sm">
-      {items.map(h => (
-        <li class={`level-${h.depth}`}>
-          <a class="hover:opacity-80" href={`#${h.slug}`}>{h.text}</a>
-        </li>
-      ))}
-    </ul>
-  </nav>
-)}
+{
+  items.length > 0 && (
+    <nav aria-label="Table of contents" class="border-l border-dashed pl-4">
+      <div class="mb-2 text-sm font-semibold text-accent">{title}</div>
+      <ul class="space-y-1 text-sm">
+        {items.map(h => (
+          <li class={`level-${h.depth}`}>
+            <a class="hover:opacity-80" href={`#${h.slug}`}>
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
 
 <style>
-  .level-3 { padding-left: .5rem; }
-  .level-4 { padding-left: 1rem; }
+  .level-3 {
+    padding-left: 0.5rem;
+  }
+  .level-4 {
+    padding-left: 1rem;
+  }
 </style>
-
-

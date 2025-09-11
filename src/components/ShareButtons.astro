@@ -9,18 +9,20 @@ const text = encodeURIComponent(Astro.props?.title ?? "");
     target="_blank"
     rel="noopener noreferrer"
     class="rounded border border-muted px-3 py-1 text-sm hover:opacity-80"
-  >LinkedIn</a>
+    >LinkedIn</a
+  >
   <a
     href={`https://x.com/intent/tweet?url=${encodeURIComponent(url)}&text=${text}`}
     target="_blank"
     rel="noopener noreferrer"
-    class="rounded border border-muted px-3 py-1 text-sm hover:opacity-80"
-  >X</a>
+    class="rounded border border-muted px-3 py-1 text-sm hover:opacity-80">X</a
+  >
   <button
     id="copy-link-btn"
     type="button"
     class="rounded border border-muted px-3 py-1 text-sm hover:opacity-80"
-  >Copy link</button>
+    >Copy link</button
+  >
 </div>
 
 <script is:inline>

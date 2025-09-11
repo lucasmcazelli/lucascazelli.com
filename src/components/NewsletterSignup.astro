@@ -5,7 +5,11 @@ export interface Props {
   cta?: string;
 }
 
-const { action = "https://substack.com/subscribe", placeholder = "Your email", cta = "Subscribe" } = Astro.props as Props;
+const {
+  action = "https://substack.com/subscribe",
+  placeholder = "Your email",
+  cta = "Subscribe",
+} = Astro.props as Props;
 ---
 
 <form
@@ -28,5 +32,3 @@ const { action = "https://substack.com/subscribe", placeholder = "Your email", c
     {cta}
   </button>
 </form>
-
-

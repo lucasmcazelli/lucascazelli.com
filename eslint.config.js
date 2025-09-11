@@ -13,6 +13,22 @@ export default [
       },
     },
   },
-  { rules: { "no-console": "error" } },
-  { ignores: ["dist/**", ".astro", "public/pagefind/**"] },
+  {
+    rules: { "no-console": "error" },
+    files: ["src/**/*.{js,ts,astro}"],
+  },
+  {
+    rules: { "no-console": "warn" },
+    files: ["scripts/**/*.js"],
+  },
+  {
+    ignores: [
+      "dist/**",
+      ".astro",
+      "public/pagefind/**",
+      ".vercel/**",
+      "scripts/**",
+      "node_modules/**",
+    ],
+  },
 ];

@@ -1,9 +1,10 @@
 ---
 title: "Why Your Brain Hates A/B Tests: System 1 vs System 2 in Product Decisions"
 description: "Product managers make 100+ micro-decisions daily. Here's how Kahneman's dual-process theory explains why we're so bad at interpreting test results."
-publishDate: 2025-01-15
-pubDatetime: 2025-01-15T10:00:00.000Z
-tags: ["cognitive-science", "product-management", "decision-making", "a-b-testing"]
+publishDate: 2025-09-11
+pubDatetime: 2025-09-11T10:00:00.000Z
+tags:
+  ["cognitive-science", "product-management", "decision-making", "a-b-testing"]
 category: "neuroscience"
 readTime: 8
 featuredImage: "/images/system1-vs-system2.png"
@@ -15,16 +16,17 @@ import BlogPost from "@/layouts/BlogPost.astro";
 import CalloutBox from "@/components/CalloutBox.astro";
 
 export const headings = [
-  { depth: 2, slug: "tldr", text: "TL;DR" },
-  { depth: 2, slug: "the-3pm-product-review-trap", text: "The 3pm Product Review Trap" },
-  { depth: 2, slug: "the-north-ai-approach", text: "The North AI Approach: Measuring Attention Before Opinion" },
-  { depth: 2, slug: "framework-dual-process", text: "Framework: Dual-Process Product Decisions" },
-  { depth: 2, slug: "next-steps", text: "Next Steps" },
+{ depth: 2, slug: "tldr", text: "TL;DR" },
+{ depth: 2, slug: "the-3pm-product-review-trap", text: "The 3pm Product Review Trap" },
+{ depth: 2, slug: "the-north-ai-approach", text: "The North AI Approach: Measuring Attention Before Opinion" },
+{ depth: 2, slug: "framework-dual-process", text: "Framework: Dual-Process Product Decisions" },
+{ depth: 2, slug: "next-steps", text: "Next Steps" },
 ];
 
 <BlogPost title={frontmatter.title} description={frontmatter.description} publishDate={new Date(frontmatter.publishDate)} tags={frontmatter.tags} headings={headings}>
 
 ## <span id="tldr">TL;DR</span>
+
 - System 1 (fast thinking) dominates 95% of product decisions
 - A/B test interpretation suffers from availability heuristic
 - North AI's attention metrics bypass cognitive biases
@@ -32,9 +34,9 @@ export const headings = [
 
 ## <span id="the-3pm-product-review-trap">The 3pm Product Review Trap</span>
 
-Last Tuesday, 3pm. Product review. 12 stakeholders on Zoom. 
+Last Tuesday, 3pm. Product review. 12 stakeholders on Zoom.
 
-The data scientist shares the A/B test results: *"Variant B shows 3.2% lift, p=0.073."*
+The data scientist shares the A/B test results: _"Variant B shows 3.2% lift, p=0.073."_
 
 What happens next is pure System 1 chaos...
 
@@ -46,7 +48,7 @@ The problem isn't the data—it's how our brains process it. Daniel Kahneman's d
 
 ## <span id="the-north-ai-approach">The North AI Approach: Measuring Attention Before Opinion</span>
 
-At North AI, we've built synthetic audiences that don't have System 1. 
+At North AI, we've built synthetic audiences that don't have System 1.
 They can't be primed. They don't get tired at 3pm.
 
 Here's how we map cognitive load to actual metrics:
@@ -75,22 +77,24 @@ Here's how we map cognitive load to actual metrics:
 
 ## <span id="framework-dual-process">Framework: Dual-Process Product Decisions</span>
 
-| Decision Type | System 1 Trigger | System 2 Override | North AI Metric |
-|--------------|------------------|-------------------|-----------------|
-| Feature Priority | "Competitor has it" | Impact modeling | Attention allocation |
-| Creative Choice | "Feels engaging" | Statistical significance | Gaze synchronization |
-| Audience Segment | "Our users love this" | Behavioral clustering | Neural activation patterns |
+| Decision Type    | System 1 Trigger      | System 2 Override        | North AI Metric            |
+| ---------------- | --------------------- | ------------------------ | -------------------------- |
+| Feature Priority | "Competitor has it"   | Impact modeling          | Attention allocation       |
+| Creative Choice  | "Feels engaging"      | Statistical significance | Gaze synchronization       |
+| Audience Segment | "Our users love this" | Behavioral clustering    | Neural activation patterns |
 
 <CalloutBox type="success">
 **Pro Tip**: Create "slow thinking" checkpoints in your process. When you feel confident about a decision, that's exactly when you need System 2 to take over.
 </CalloutBox>
 
 ## <span id="next-steps">Next Steps</span>
+
 1. Audit your last 5 product decisions for System 1 dominance
 2. Install attention metrics alongside conversion metrics
 3. Create "slow thinking" checkpoints in your process
 
 ---
-*Building synthetic audiences at [North AI](https://north-ai.com). Previously optimized structures, now optimizing attention.*
+
+_Building synthetic audiences at [North AI](https://north-ai.com). Previously optimized structures, now optimizing attention._
 
 </BlogPost>

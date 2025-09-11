@@ -37,17 +37,39 @@ const {
 } = Astro.props as Props;
 ---
 
-<Layout {title} {description} {pubDatetime} {modDatetime} {ogImage} {canonicalURL}>
+<Layout
+  {title}
+  {description}
+  {pubDatetime}
+  {modDatetime}
+  {ogImage}
+  {canonicalURL}
+>
   <fragment slot="head">
-    <SEOHead {title} {description} publishDate={pubDatetime} {tags} {type} {ogImage} {canonicalURL} {modDatetime} />
+    <SEOHead
+      {title}
+      {description}
+      publishDate={pubDatetime}
+      {tags}
+      {type}
+      {ogImage}
+      {canonicalURL}
+      {modDatetime}
+    />
   </fragment>
   <main class="mx-auto w-full max-w-app px-4 pb-12">
     <h1 class="mt-8 text-3xl font-bold text-accent">{title}</h1>
-    {pubDatetime && (
-      <div class="mt-2">
-        <Datetime pubDatetime={pubDatetime} modDatetime={modDatetime} timezone={undefined} />
-      </div>
-    )}
+    {
+      pubDatetime && (
+        <div class="mt-2">
+          <Datetime
+            pubDatetime={pubDatetime}
+            modDatetime={modDatetime}
+            timezone={undefined}
+          />
+        </div>
+      )
+    }
     <div class="mt-6 grid grid-cols-1 gap-8 md:grid-cols-[1fr_280px]">
       <article class="app-prose max-w-app">
         <slot />
@@ -64,5 +86,3 @@ const {
     </div>
   </main>
 </Layout>
-
-

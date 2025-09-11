@@ -5,7 +5,10 @@ import { SITE } from "@/config";
 export const BLOG_PATH = "src/data/blog";
 
 const blog = defineCollection({
-  loader: glob({ pattern: ["**/[^_]*.md", "**/[^_]*.mdx"], base: `./${BLOG_PATH}` }),
+  loader: glob({
+    pattern: ["**/[^_]*.md", "**/[^_]*.mdx"],
+    base: `./${BLOG_PATH}`,
+  }),
   schema: ({ image }) =>
     z.object({
       author: z.string().default(SITE.author),
@@ -16,7 +19,15 @@ const blog = defineCollection({
       featured: z.boolean().optional(),
       draft: z.boolean().default(false),
       tags: z.array(z.string()).default(["others"]),
-      category: z.enum(['neuroscience', 'product', 'statistics', 'case-study', 'technical']).optional(),
+      category: z
+        .enum([
+          "neuroscience",
+          "product",
+          "statistics",
+          "case-study",
+          "technical",
+        ])
+        .optional(),
       readTime: z.number().optional(), // minutes
       featuredImage: z.string().optional(),
       ogImage: image().or(z.string()).optional(),
