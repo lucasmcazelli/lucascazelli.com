@@ -1,0 +1,127 @@
+---
+export interface Props {
+  currentPost: string;
+  allPosts: Array<{
+    slug: string;
+    data: {
+      title: string;
+      tags?: string[];
+      category?: string;
+      connections?: string[];
+      backlinks?: string[];
+    };
+  }>;
+}
+
+const { currentPost, allPosts } = Astro.props;
+
+// Find posts that link to the current post
+const backlinks = allPosts.filter(post => 
+  post.slug !== currentPost && 
+  (post.data.connections?.includes(currentPost) || 
+   post.data.backlinks?.includes(currentPost))
+);
+
+// Find posts that the current post links to
+const outboundLinks = allPosts.filter(post => 
+  post.slug !== currentPost && 
+  allPosts.find(p => p.slug === currentPost)?.data.connections?.includes(post.slug)
+);
+
+// Find related posts (shared tags, same category, etc.)
+const currentPostData = allPosts.find(p => p.slug === currentPost)?.data;
+const relatedPosts = allPosts
+  .filter(post => {
+    if (post.slug === currentPost) return false;
+    
+    // Check for shared tags
+    const sharedTags = currentPostData?.tags?.filter(tag => 
+      post.data.tags?.includes(tag)
+    ) || [];
+    
+    // Check for same category
+    const sameCategory = currentPostData?.category === post.data.category;
+    
+    return sharedTags.length > 0 || sameCategory;
+  })
+  .slice(0, 5); // Limit to 5 related posts
+---
+
+{backlinks.length > 0 && (
+  <div class="backlinks-section my-8 p-6 bg-muted/20 rounded-lg border border-muted">
+    <h3 class="text-lg font-semibold text-accent mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg>
+      Backlinks
+    </h3>
+    <p class="text-sm text-muted-foreground mb-4">
+      Posts that reference this one
+    </p>
+    <div class="grid gap-3">
+      {backlinks.map(backlink => (
+        <a 
+          href={`/posts/${backlink.slug}`}
+          class="block p-3 bg-background rounded border border-muted hover:border-accent hover:bg-accent/5 transition-colors"
+        >
+          <h4 class="font-medium text-foreground">{backlink.data.title}</h4>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
+
+{outboundLinks.length > 0 && (
+  <div class="outbound-links-section my-8 p-6 bg-muted/20 rounded-lg border border-muted">
+    <h3 class="text-lg font-semibold text-accent mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+      </svg>
+      Referenced Posts
+    </h3>
+    <p class="text-sm text-muted-foreground mb-4">
+      Posts referenced in this article
+    </p>
+    <div class="grid gap-3">
+      {outboundLinks.map(link => (
+        <a 
+          href={`/posts/${link.slug}`}
+          class="block p-3 bg-background rounded border border-muted hover:border-accent hover:bg-accent/5 transition-colors"
+        >
+          <h4 class="font-medium text-foreground">{link.data.title}</h4>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
+
+{relatedPosts.length > 0 && (
+  <div class="related-posts-section my-8 p-6 bg-muted/20 rounded-lg border border-muted">
+    <h3 class="text-lg font-semibold text-accent mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg>
+      Related Posts
+    </h3>
+    <p class="text-sm text-muted-foreground mb-4">
+      Posts with similar topics or categories
+    </p>
+    <div class="grid gap-3">
+      {relatedPosts.map(related => (
+        <a 
+          href={`/posts/${related.slug}`}
+          class="block p-3 bg-background rounded border border-muted hover:border-accent hover:bg-accent/5 transition-colors"
+        >
+          <h4 class="font-medium text-foreground">{related.data.title}</h4>
+          <div class="flex flex-wrap gap-1 mt-2">
+            {related.data.tags?.slice(0, 3).map((tag: string) => (
+              <span class="px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
+                {tag}
+              </span>
+            ))}
+          </div>
+        </a>
+      ))}
+    </div>
+  </div>
+)}

@@ -1,0 +1,382 @@
+---
+export interface Props {
+  posts: Array<{
+    slug: string;
+    data: {
+      title: string;
+      tags: string[];
+      category?: string;
+      importance?: number;
+      connections?: string[];
+      backlinks?: string[];
+      relatedPosts?: string[];
+      cluster?: string;
+    };
+  }>;
+  width?: number;
+  height?: number;
+}
+
+const { posts, width = 800, height = 600 } = Astro.props;
+
+// Generate graph data
+const nodes = posts.map(post => ({
+  id: post.slug,
+  title: post.data.title,
+  tags: post.data.tags,
+  category: post.data.category || 'uncategorized',
+  importance: post.data.importance || 5,
+  cluster: post.data.cluster || 'default',
+  x: Math.random() * width,
+  y: Math.random() * height,
+}));
+
+// Generate connections based on shared tags, categories, and manual connections
+const links: Array<{ source: string; target: string; strength: number; type: string }> = [];
+
+posts.forEach(post => {
+  posts.forEach(otherPost => {
+    if (post.slug === otherPost.slug) return;
+    
+    let strength = 0;
+    let type = 'weak';
+    
+    // Check for shared tags
+    const sharedTags = post.data.tags.filter(tag => 
+      otherPost.data.tags.includes(tag)
+    );
+    if (sharedTags.length > 0) {
+      strength += sharedTags.length * 0.3;
+      type = 'tag';
+    }
+    
+    // Check for same category
+    if (post.data.category && post.data.category === otherPost.data.category) {
+      strength += 0.5;
+      type = 'category';
+    }
+    
+    // Check for manual connections
+    if (post.data.connections?.includes(otherPost.slug)) {
+      strength += 1.0;
+      type = 'manual';
+    }
+    
+    // Check for backlinks
+    if (post.data.backlinks?.includes(otherPost.slug)) {
+      strength += 0.8;
+      type = 'backlink';
+    }
+    
+    // Only add link if strength is significant
+    if (strength > 0.2) {
+      links.push({
+        source: post.slug,
+        target: otherPost.slug,
+        strength,
+        type
+      });
+    }
+  });
+});
+
+const graphData = { nodes, links };
+---
+
+<div class="knowledge-graph-container">
+  <div class="graph-controls mb-4 flex flex-wrap gap-2">
+    <button id="reset-layout" class="px-3 py-1 text-sm bg-accent text-accent-foreground rounded hover:bg-accent/80">
+      Reset Layout
+    </button>
+    <button id="toggle-clusters" class="px-3 py-1 text-sm border border-muted rounded hover:bg-muted">
+      Toggle Clusters
+    </button>
+    <select id="filter-category" class="px-3 py-1 text-sm border border-muted rounded bg-background">
+      <option value="">All Categories</option>
+      <option value="neuroscience">Neuroscience</option>
+      <option value="product">Product</option>
+      <option value="statistics">Statistics</option>
+      <option value="case-study">Case Study</option>
+      <option value="technical">Technical</option>
+    </select>
+    <input 
+      id="search-nodes" 
+      type="text" 
+      placeholder="Search posts..." 
+      class="px-3 py-1 text-sm border border-muted rounded bg-background flex-1 min-w-48"
+    />
+  </div>
+  
+  <div class="graph-stats mb-4 text-sm text-muted-foreground">
+    <span id="node-count">{nodes.length}</span> posts • 
+    <span id="link-count">{links.length}</span> connections
+  </div>
+  
+  <div class="graph-svg-container border border-muted rounded-lg overflow-hidden">
+    <svg id="knowledge-graph" width={width} height={height}></svg>
+  </div>
+  
+  <div class="graph-legend mt-4 text-xs text-muted-foreground">
+    <div class="flex flex-wrap gap-4">
+      <div class="flex items-center gap-1">
+        <div class="w-3 h-0.5 bg-blue-500"></div>
+        <span>Manual connections</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="w-3 h-0.5 bg-green-500"></div>
+        <span>Backlinks</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="w-3 h-0.5 bg-orange-500"></div>
+        <span>Same category</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <div class="w-3 h-0.5 bg-gray-400"></div>
+        <span>Shared tags</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ graphData, width, height }}>
+  // Load D3.js from CDN
+  if (typeof d3 === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://d3js.org/d3.v7.min.js';
+    script.onload = initGraph;
+    document.head.appendChild(script);
+  } else {
+    initGraph();
+  }
+
+  function initGraph() {
+
+  // Color schemes for categories
+  const categoryColors = {
+    'neuroscience': '#8B5CF6',
+    'product': '#3B82F6', 
+    'statistics': '#10B981',
+    'case-study': '#F59E0B',
+    'technical': '#EF4444',
+    'uncategorized': '#6B7280'
+  };
+
+  // Initialize D3 force simulation
+  const svg = d3.select('#knowledge-graph');
+  // const container = svg.node().parentElement;
+  
+  // Set up zoom behavior
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 4])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    });
+  
+  svg.call(zoom);
+  
+  const g = svg.append('g');
+  
+  // Create force simulation
+  const simulation = d3.forceSimulation(graphData.nodes)
+    .force('link', d3.forceLink(graphData.links)
+      .id(d => d.id)
+      .distance(d => 150 - d.strength * 50)
+      .strength(d => d.strength * 0.1)
+    )
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => Math.sqrt(d.importance) * 8 + 10));
+
+  // Create links
+  const link = g.append('g')
+    .attr('class', 'links')
+    .selectAll('line')
+    .data(graphData.links)
+    .enter().append('line')
+    .attr('stroke', d => {
+      switch(d.type) {
+        case 'manual': return '#3B82F6';
+        case 'backlink': return '#10B981';
+        case 'category': return '#F59E0B';
+        case 'tag': return '#9CA3AF';
+        default: return '#6B7280';
+      }
+    })
+    .attr('stroke-width', d => Math.sqrt(d.strength) * 3)
+    .attr('stroke-opacity', d => Math.min(d.strength, 0.8));
+
+  // Create nodes
+  const node = g.append('g')
+    .attr('class', 'nodes')
+    .selectAll('g')
+    .data(graphData.nodes)
+    .enter().append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', dragstarted)
+      .on('drag', dragged)
+      .on('end', dragended)
+    );
+
+  // Add circles to nodes
+  node.append('circle')
+    .attr('r', d => Math.sqrt(d.importance) * 4 + 8)
+    .attr('fill', d => categoryColors[d.category] || categoryColors.uncategorized)
+    .attr('stroke', '#fff')
+    .attr('stroke-width', 2)
+    .attr('opacity', 0.9);
+
+  // Add labels to nodes
+  node.append('text')
+    .text(d => d.title.length > 20 ? d.title.substring(0, 20) + '...' : d.title)
+    .attr('x', 0)
+    .attr('y', d => Math.sqrt(d.importance) * 4 + 15)
+    .attr('text-anchor', 'middle')
+    .attr('font-size', '10px')
+    .attr('fill', '#374151')
+    .attr('font-weight', '500');
+
+  // Add click handlers
+  node.on('click', (_, d) => {
+    // Navigate to post
+    window.location.href = `/posts/${d.id}`;
+  });
+
+  // Add hover effects
+  node.on('mouseover', function(_, d) {
+    d3.select(this).select('circle')
+      .attr('stroke-width', 4)
+      .attr('opacity', 1);
+    
+    // Highlight connected nodes
+    const connectedNodes = graphData.links
+      .filter(link => link.source.id === d.id || link.target.id === d.id)
+      .map(link => link.source.id === d.id ? link.target.id : link.source.id);
+    
+    node.select('circle')
+      .attr('opacity', n => 
+        n.id === d.id || connectedNodes.includes(n.id) ? 1 : 0.3
+      );
+  });
+
+  node.on('mouseout', function() {
+    d3.select(this).select('circle')
+      .attr('stroke-width', 2)
+      .attr('opacity', 0.9);
+    
+    // Reset all nodes
+    node.select('circle').attr('opacity', 0.9);
+  });
+
+  // Update positions on simulation tick
+  simulation.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+
+  // Drag functions
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+
+  // Control handlers
+  document.getElementById('reset-layout')?.addEventListener('click', () => {
+    simulation.alpha(1).restart();
+  });
+
+  document.getElementById('toggle-clusters')?.addEventListener('click', () => {
+    // Toggle cluster force
+    const clusterForce = simulation.force('cluster');
+    if (clusterForce) {
+      simulation.force('cluster', null);
+    } else {
+      simulation.force('cluster', d3.forceY(d => {
+        const categoryOrder = ['neuroscience', 'product', 'statistics', 'case-study', 'technical'];
+        const index = categoryOrder.indexOf(d.category);
+        return (index + 1) * height / (categoryOrder.length + 1);
+      }).strength(0.1));
+    }
+    simulation.alpha(0.3).restart();
+  });
+
+  document.getElementById('filter-category')?.addEventListener('change', (event) => {
+    const category = event.target.value;
+    node.style('display', d => 
+      !category || d.category === category ? 'block' : 'none'
+    );
+    link.style('display', d => 
+      !category || 
+      (d.source.category === category || d.target.category === category) 
+        ? 'block' : 'none'
+    );
+  });
+
+  document.getElementById('search-nodes')?.addEventListener('input', (event) => {
+    const query = event.target.value.toLowerCase();
+    node.style('display', d => 
+      d.title.toLowerCase().includes(query) || 
+      d.tags.some(tag => tag.toLowerCase().includes(query))
+        ? 'block' : 'none'
+    );
+  });
+
+  // Update stats
+  document.getElementById('node-count').textContent = graphData.nodes.length;
+  document.getElementById('link-count').textContent = graphData.links.length;
+  }
+</script>
+
+<style>
+  .knowledge-graph-container {
+    width: 100%;
+  }
+  
+  .graph-svg-container {
+    background-color: var(--color-background);
+  }
+  
+  .node {
+    cursor: pointer;
+  }
+  
+  .node:hover circle {
+    stroke-width: 4px !important;
+  }
+  
+  .links line {
+    stroke-linecap: round;
+  }
+  
+  .node text {
+    pointer-events: none;
+    user-select: none;
+  }
+  
+  .graph-controls button:hover {
+    background-color: var(--color-muted);
+  }
+  
+  .graph-controls input:focus,
+  .graph-controls select:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+</style>

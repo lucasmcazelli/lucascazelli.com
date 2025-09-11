@@ -34,6 +34,12 @@ const blog = defineCollection({
       canonicalURL: z.string().optional(),
       hideEditPost: z.boolean().optional(),
       timezone: z.string().optional(),
+      // Knowledge Graph fields
+      connections: z.array(z.string()).optional(), // Manual connections to other posts
+      backlinks: z.array(z.string()).optional(), // Posts that link to this one
+      relatedPosts: z.array(z.string()).optional(), // Auto-generated related posts
+      importance: z.number().min(1).max(10).default(5), // Node size in graph
+      cluster: z.string().optional(), // Community/cluster assignment
     }),
 });
 

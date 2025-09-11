@@ -1,0 +1,206 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import Footer from "@/components/Footer.astro";
+import KnowledgeGraph from "@/components/KnowledgeGraph.astro";
+import { getCollection } from "astro:content";
+import getSortedPosts from "@/utils/getSortedPosts";
+
+const posts = await getCollection("blog");
+const sortedPosts = getSortedPosts(posts);
+
+// Convert to the format expected by KnowledgeGraph
+const graphPosts = sortedPosts.map(post => ({
+  slug: post.id,
+  data: {
+    title: post.data.title,
+    tags: post.data.tags || [],
+    category: post.data.category,
+    importance: post.data.importance || 5,
+    connections: post.data.connections || [],
+    backlinks: post.data.backlinks || [],
+    relatedPosts: post.data.relatedPosts || [],
+    cluster: post.data.cluster,
+  }
+}));
+
+// Calculate graph statistics
+const totalPosts = graphPosts.length;
+const totalConnections = graphPosts.reduce((acc, post) => 
+  acc + (post.data.connections?.length || 0), 0
+);
+const categories = [...new Set(graphPosts.map(p => p.data.category).filter(Boolean))];
+const avgConnections = totalConnections / totalPosts;
+
+// Find most connected posts
+const mostConnected = graphPosts
+  .map(post => ({
+    ...post,
+    connectionCount: (post.data.connections?.length || 0) + (post.data.backlinks?.length || 0)
+  }))
+  .sort((a, b) => b.connectionCount - a.connectionCount)
+  .slice(0, 5);
+
+// Find isolated posts (no connections)
+const isolatedPosts = graphPosts.filter(post => 
+  (post.data.connections?.length || 0) === 0 && 
+  (post.data.backlinks?.length || 0) === 0
+);
+---
+
+<Layout title="Knowledge Graph" description="Interactive visualization of blog post connections and relationships">
+  <Header />
+  <main id="main-content">
+    <article class="pt-6 md:pt-12">
+      <div class="mx-auto max-w-4xl px-6">
+        <header class="mb-8">
+          <h1 class="text-3xl font-bold text-foreground mb-4">
+            Knowledge Graph
+          </h1>
+          <p class="text-lg text-muted-foreground mb-6">
+            Explore the connections between ideas, concepts, and posts in this interactive knowledge map.
+          </p>
+          
+          <!-- Graph Statistics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{totalPosts}</div>
+              <div class="text-sm text-muted-foreground">Total Posts</div>
+            </div>
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{totalConnections}</div>
+              <div class="text-sm text-muted-foreground">Connections</div>
+            </div>
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{categories.length}</div>
+              <div class="text-sm text-muted-foreground">Categories</div>
+            </div>
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{avgConnections.toFixed(1)}</div>
+              <div class="text-sm text-muted-foreground">Avg Connections</div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Interactive Graph -->
+        <div class="mb-8">
+          <KnowledgeGraph posts={graphPosts} width={800} height={600} />
+        </div>
+
+        <!-- Graph Analytics -->
+        <div class="grid md:grid-cols-2 gap-8 mb-8">
+          <!-- Most Connected Posts -->
+          <div class="p-6 bg-muted/20 rounded-lg border border-muted">
+            <h3 class="text-lg font-semibold text-accent mb-4">
+              Most Connected Posts
+            </h3>
+            <div class="space-y-3">
+              {mostConnected.map((post) => (
+                <div class="flex items-center justify-between p-3 bg-background rounded border border-muted">
+                  <div class="flex-1">
+                    <a 
+                      href={`/posts/${post.slug}`}
+                      class="font-medium text-foreground hover:text-accent"
+                    >
+                      {post.data.title}
+                    </a>
+                    <div class="text-sm text-muted-foreground">
+                      {post.data.category && (
+                        <span class="capitalize">{post.data.category}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div class="text-sm font-medium text-accent">
+                    {post.connectionCount} links
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <!-- Category Distribution -->
+          <div class="p-6 bg-muted/20 rounded-lg border border-muted">
+            <h3 class="text-lg font-semibold text-accent mb-4">
+              Category Distribution
+            </h3>
+            <div class="space-y-3">
+              {categories.map(category => {
+                const count = graphPosts.filter(p => p.data.category === category).length;
+                const percentage = (count / totalPosts) * 100;
+                return (
+                  <div class="flex items-center justify-between">
+                    <span class="capitalize text-foreground">{category}</span>
+                    <div class="flex items-center gap-2">
+                      <div class="w-24 bg-muted rounded-full h-2">
+                        <div 
+                          class="bg-accent h-2 rounded-full" 
+                          style={`width: ${percentage}%`}
+                        ></div>
+                      </div>
+                      <span class="text-sm text-muted-foreground w-8">{count}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <!-- Isolated Posts (if any) -->
+        {isolatedPosts.length > 0 && (
+          <div class="p-6 bg-muted/20 rounded-lg border border-muted mb-8">
+            <h3 class="text-lg font-semibold text-accent mb-4">
+              Isolated Posts
+            </h3>
+            <p class="text-sm text-muted-foreground mb-4">
+              These posts don't have any connections yet. Consider adding links to related content.
+            </p>
+            <div class="grid gap-2">
+              {isolatedPosts.map(post => (
+                <a 
+                  href={`/posts/${post.slug}`}
+                  class="p-3 bg-background rounded border border-muted hover:border-accent hover:bg-accent/5 transition-colors"
+                >
+                  <div class="font-medium text-foreground">{post.data.title}</div>
+                  <div class="text-sm text-muted-foreground">
+                    {post.data.category && (
+                      <span class="capitalize">{post.data.category}</span>
+                    )}
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Usage Instructions -->
+        <div class="p-6 bg-muted/20 rounded-lg border border-muted">
+          <h3 class="text-lg font-semibold text-accent mb-4">
+            How to Use the Knowledge Graph
+          </h3>
+          <div class="grid md:grid-cols-2 gap-6 text-sm">
+            <div>
+              <h4 class="font-medium text-foreground mb-2">Navigation</h4>
+              <ul class="space-y-1 text-muted-foreground">
+                <li>• Click and drag nodes to move them around</li>
+                <li>• Click on a node to navigate to that post</li>
+                <li>• Use mouse wheel to zoom in/out</li>
+                <li>• Drag the background to pan around</li>
+              </ul>
+            </div>
+            <div>
+              <h4 class="font-medium text-foreground mb-2">Filtering</h4>
+              <ul class="space-y-1 text-muted-foreground">
+                <li>• Use category filter to show specific topics</li>
+                <li>• Search by post title or tags</li>
+                <li>• Toggle cluster view to group by category</li>
+                <li>• Reset layout to reorganize the graph</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </main>
+  <Footer />
+</Layout>

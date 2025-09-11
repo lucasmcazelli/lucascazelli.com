@@ -9,6 +9,12 @@ category: "neuroscience"
 readTime: 8
 featuredImage: "/images/system1-vs-system2.png"
 draft: false
+# Knowledge Graph fields
+importance: 8
+connections: []
+backlinks: []
+relatedPosts: []
+cluster: "cognitive-science"
 ---
 
 import { Image } from 'astro:assets';
