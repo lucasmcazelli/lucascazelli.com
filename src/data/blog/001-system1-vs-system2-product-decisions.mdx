@@ -13,7 +13,6 @@ draft: false
 import { Image } from 'astro:assets';
 import BlogPost from "@/layouts/BlogPost.astro";
 import CalloutBox from "@/components/CalloutBox.astro";
-import DataViz from "@/components/DataViz.astro";
 
 export const headings = [
   { depth: 2, slug: "tldr", text: "TL;DR" },
@@ -23,12 +22,6 @@ export const headings = [
   { depth: 2, slug: "next-steps", text: "Next Steps" },
 ];
 
-const cognitiveLoadData = [
-  { x: 1, y: 0.15, label: "Simple UI" },
-  { x: 2, y: 0.28, label: "Complex Form" },
-  { x: 3, y: 0.45, label: "Multi-step Flow" },
-  { x: 4, y: 0.62, label: "Cognitive Overload" }
-];
 
 <BlogPost title={frontmatter.title} description={frontmatter.description} publishDate={new Date(frontmatter.publishDate)} tags={frontmatter.tags} headings={headings}>
 
@@ -59,11 +52,27 @@ They can't be primed. They don't get tired at 3pm.
 
 Here's how we map cognitive load to actual metrics:
 
-<DataViz 
-  type="scatter"
-  data={cognitiveLoadData}
-  title="Cognitive Load vs. Drop-off Rate"
-/>
+<div class="my-6 rounded-lg border border-muted bg-muted/20 p-6">
+  <h3 class="mb-4 text-lg font-semibold text-accent">Cognitive Load vs. Drop-off Rate</h3>
+  <div class="grid grid-cols-2 gap-4">
+    <div class="rounded border p-3 text-center">
+      <div class="text-sm font-medium">Simple UI</div>
+      <div class="text-xs text-muted-foreground">X: 1, Y: 0.15</div>
+    </div>
+    <div class="rounded border p-3 text-center">
+      <div class="text-sm font-medium">Complex Form</div>
+      <div class="text-xs text-muted-foreground">X: 2, Y: 0.28</div>
+    </div>
+    <div class="rounded border p-3 text-center">
+      <div class="text-sm font-medium">Multi-step Flow</div>
+      <div class="text-xs text-muted-foreground">X: 3, Y: 0.45</div>
+    </div>
+    <div class="rounded border p-3 text-center">
+      <div class="text-sm font-medium">Cognitive Overload</div>
+      <div class="text-xs text-muted-foreground">X: 4, Y: 0.62</div>
+    </div>
+  </div>
+</div>
 
 ## <span id="framework-dual-process">Framework: Dual-Process Product Decisions</span>
 

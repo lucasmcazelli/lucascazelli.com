@@ -10,7 +10,8 @@
     "astro": "astro",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "generate-og-images": "node scripts/generate-og-simple.js"
   },
   "dependencies": {
     "@astrojs/mdx": "^4.3.5",
