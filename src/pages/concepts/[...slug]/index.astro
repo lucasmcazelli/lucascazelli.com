@@ -1,0 +1,384 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import Footer from '@/components/Footer.astro';
+import ConceptModal from '@/components/ConceptModal.astro';
+import getSortedPosts from '@/utils/getSortedPosts';
+
+export interface Props {
+  concept: CollectionEntry<'concepts'>;
+}
+
+export async function getStaticPaths() {
+  const concepts = await getCollection('concepts');
+  return concepts.map(concept => ({
+    params: { slug: concept.slug },
+    props: { concept },
+  }));
+}
+
+const { concept } = Astro.props;
+const { Content } = await concept.render();
+
+// Get related posts that mention this concept
+const posts = await getCollection('blog');
+const relatedPosts = posts.filter(post => {
+  const content = post.body;
+  const term = concept.data.term;
+  const aliases = concept.data.aliases || [];
+  
+  return content.includes(term) || 
+         aliases.some(alias => content.includes(alias));
+}).slice(0, 3);
+---
+
+<Layout title={`${concept.data.term} | Knowledge Base`}>
+  <Header />
+  
+  <main class="concept-page">
+    <article class="concept-article">
+      <header class="concept-header">
+        <nav class="breadcrumb">
+          <a href="/concepts">Knowledge Base</a>
+          <span class="separator">›</span>
+          <span class="current">{concept.data.term}</span>
+        </nav>
+        
+        <div class="concept-meta">
+          <span class="category-badge">{concept.data.category}</span>
+          {concept.data.weight && (
+            <span class="importance-badge">Importance: {concept.data.importance}/10</span>
+          )}
+        </div>
+      </header>
+      
+      <div class="concept-content">
+        <Content />
+      </div>
+      
+      {relatedPosts.length > 0 && (
+        <aside class="related-posts">
+          <h3>Related Blog Posts</h3>
+          <ul>
+            {relatedPosts.map(post => (
+              <li>
+                <a href={`/posts/${post.slug}`}>{post.data.title}</a>
+                <span class="post-date">
+                  {new Date(post.data.pubDatetime).toLocaleDateString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )}
+    </article>
+  </main>
+  
+  <Footer />
+  <ConceptModal />
+</Layout>
+
+<style>
+.concept-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.concept-article {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.concept-header {
+  background: linear-gradient(135deg, #4A6741 0%, #7CB342 100%);
+  color: white;
+  padding: 2rem;
+}
+
+.breadcrumb {
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.breadcrumb a {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  color: white;
+}
+
+.separator {
+  margin: 0 0.5rem;
+  opacity: 0.7;
+}
+
+.current {
+  font-weight: 500;
+}
+
+.concept-meta {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.category-badge, .importance-badge {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.concept-content {
+  padding: 2rem;
+  line-height: 1.7;
+}
+
+.concept-content :global(h1) {
+  color: #4A6741;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.concept-content :global(h2) {
+  color: #4A6741;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.5rem;
+}
+
+.concept-content :global(h3) {
+  color: #666;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.concept-content :global(p) {
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.concept-content :global(ul), .concept-content :global(ol) {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.concept-content :global(li) {
+  margin-bottom: 0.5rem;
+}
+
+.concept-content :global(code) {
+  background: #f5f5f5;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  color: #4A6741;
+}
+
+.concept-content :global(pre) {
+  background: #f8f8f8;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-left: 3px solid #4A6741;
+}
+
+.concept-content :global(pre code) {
+  background: none;
+  padding: 0;
+  color: #333;
+}
+
+.concept-content :global(blockquote) {
+  border-left: 3px solid #4A6741;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #666;
+}
+
+.concept-content :global(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.concept-content :global(th), .concept-content :global(td) {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.concept-content :global(th) {
+  background: #f8f8f8;
+  font-weight: 600;
+  color: #4A6741;
+}
+
+.related-posts {
+  background: #f8f9fa;
+  padding: 2rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.related-posts h3 {
+  color: #4A6741;
+  margin-bottom: 1rem;
+}
+
+.related-posts ul {
+  list-style: none;
+  padding: 0;
+}
+
+.related-posts li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.related-posts li:last-child {
+  border-bottom: none;
+}
+
+.related-posts a {
+  color: #4A6741;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.related-posts a:hover {
+  text-decoration: underline;
+}
+
+.post-date {
+  color: #999;
+  font-size: 0.9rem;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .concept-article {
+    background: #1a1a1a;
+    color: #e0e0e0;
+  }
+  
+  .concept-header {
+    background: linear-gradient(135deg, #2d4a2d 0%, #4a7c59 100%);
+  }
+  
+  .concept-content :global(h1),
+  .concept-content :global(h2) {
+    color: #7CB342;
+  }
+  
+  .concept-content :global(h3) {
+    color: #ccc;
+  }
+  
+  .concept-content :global(p) {
+    color: #e0e0e0;
+  }
+  
+  .concept-content :global(code) {
+    background: #2a2a2a;
+    color: #7CB342;
+  }
+  
+  .concept-content :global(pre) {
+    background: #2a2a2a;
+    border-left-color: #7CB342;
+  }
+  
+  .concept-content :global(pre code) {
+    color: #e0e0e0;
+  }
+  
+  .concept-content :global(blockquote) {
+    border-left-color: #7CB342;
+    color: #ccc;
+  }
+  
+  .concept-content :global(th) {
+    background: #2a2a2a;
+    color: #7CB342;
+  }
+  
+  .concept-content :global(td) {
+    border-bottom-color: #404040;
+  }
+  
+  .related-posts {
+    background: #2a2a2a;
+    border-top-color: #404040;
+  }
+  
+  .related-posts h3 {
+    color: #7CB342;
+  }
+  
+  .related-posts li {
+    border-bottom-color: #404040;
+  }
+  
+  .related-posts a {
+    color: #7CB342;
+  }
+  
+  .post-date {
+    color: #999;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .concept-page {
+    padding: 1rem;
+  }
+  
+  .concept-header {
+    padding: 1.5rem;
+  }
+  
+  .concept-content {
+    padding: 1.5rem;
+  }
+  
+  .concept-content :global(h1) {
+    font-size: 1.75rem;
+  }
+  
+  .concept-content :global(h2) {
+    font-size: 1.35rem;
+  }
+  
+  .concept-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .related-posts {
+    padding: 1.5rem;
+  }
+  
+  .related-posts li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}
+</style>

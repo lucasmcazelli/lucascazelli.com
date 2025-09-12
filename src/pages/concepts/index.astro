@@ -1,0 +1,478 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+
+const concepts = await getCollection('concepts');
+
+// Group by category
+const grouped = concepts.reduce((acc, concept) => {
+  const cat = concept.data.category;
+  if (!acc[cat]) acc[cat] = [];
+  acc[cat].push(concept);
+  return acc;
+}, {} as Record<string, typeof concepts>);
+
+// Sort each group alphabetically
+Object.keys(grouped).forEach(cat => {
+  grouped[cat].sort((a, b) => a.data.term.localeCompare(b.data.term));
+});
+
+// Category display names
+const categoryNames = {
+  'engineering': 'Engineering',
+  'cognitive-science': 'Cognitive Science',
+  'statistics': 'Statistics',
+  'product': 'Product Management',
+  'neuroai': 'NeuroAI & Machine Learning'
+};
+---
+
+<Layout title="Knowledge Base | Lucas Cazelli">
+  <Header />
+  
+  <main class="concepts-page">
+    <header class="page-header">
+      <h1>Knowledge Base</h1>
+      <p class="subtitle">
+        Explore the concepts that bridge engineering and product thinking. 
+        Each term connects to related ideas, forming a web of knowledge.
+      </p>
+      <nav class="concept-nav">
+        <a href="/graph" class="graph-link">
+          <span class="icon">🕸️</span>
+          View Knowledge Graph
+        </a>
+        <a href="/posts" class="posts-link">
+          <span class="icon">📝</span>
+          Browse Blog Posts
+        </a>
+      </nav>
+    </header>
+    
+    <div class="concepts-grid">
+      {Object.entries(grouped).map(([category, items]) => (
+        <section class="category-section">
+          <h2 class="category-title">
+            <span class="category-icon">
+              {category === 'engineering' && '🔧'}
+              {category === 'cognitive-science' && '🧠'}
+              {category === 'statistics' && '📊'}
+              {category === 'product' && '🚀'}
+              {category === 'neuroai' && '🤖'}
+            </span>
+            {categoryNames[category]}
+            <span class="concept-count">({items.length})</span>
+          </h2>
+          <div class="concept-cards">
+            {items.map(concept => (
+              <article class="concept-card">
+                <h3>
+                  <a href={`/concepts/${concept.slug}`}>{concept.data.term}</a>
+                </h3>
+                <p class="concept-definition">{concept.data.definition}</p>
+                
+                {concept.data.bridgeTo && (
+                  <div class="bridge-indicator">
+                    <span class="bridge-label">Bridges to:</span>
+                    <a href={`/concepts/${concept.data.bridgeTo}`} class="bridge-link">
+                      {concept.data.bridgeTo.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </a>
+                  </div>
+                )}
+                
+                <div class="concept-meta">
+                  {concept.data.related && concept.data.related.length > 0 && (
+                    <span class="related-count">
+                      <span class="icon">🔗</span>
+                      {concept.data.related.length} related
+                    </span>
+                  )}
+                  {concept.data.examples && concept.data.examples.length > 0 && (
+                    <span class="examples-count">
+                      <span class="icon">💡</span>
+                      {concept.data.examples.length} examples
+                    </span>
+                  )}
+                  <span class="importance-indicator" data-importance={concept.data.importance}>
+                    <span class="icon">⭐</span>
+                    {concept.data.importance}/10
+                  </span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+    
+    <footer class="page-footer">
+      <p>
+        This knowledge base grows with each new post and concept. 
+        <a href="/posts" class="footer-link">Read the latest posts</a> to discover new connections.
+      </p>
+    </footer>
+  </main>
+  
+  <Footer />
+</Layout>
+
+<style>
+.concepts-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-header h1 {
+  font-size: 3rem;
+  color: #4A6741;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+.concept-nav {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.graph-link, .posts-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.graph-link {
+  background: #4A6741;
+  color: white;
+}
+
+.graph-link:hover {
+  background: #2d4a2d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 103, 65, 0.3);
+}
+
+.posts-link {
+  background: #f8f9fa;
+  color: #4A6741;
+  border: 2px solid #4A6741;
+}
+
+.posts-link:hover {
+  background: #4A6741;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.concepts-grid {
+  display: grid;
+  gap: 3rem;
+}
+
+.category-section {
+  border-left: 4px solid #4A6741;
+  padding-left: 2rem;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #4A6741;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.category-icon {
+  font-size: 1.25rem;
+}
+
+.concept-count {
+  background: #4A6741;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.concept-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.concept-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.concept-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4A6741, #7CB342);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.concept-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-4px);
+  border-color: #4A6741;
+}
+
+.concept-card:hover::before {
+  transform: scaleX(1);
+}
+
+.concept-card h3 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.concept-card h3 a {
+  color: #333;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.concept-card h3 a:hover {
+  color: #4A6741;
+}
+
+.concept-definition {
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.bridge-indicator {
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #f0f7f0, #e8f5e8);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 3px solid #4A6741;
+}
+
+.bridge-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #4A6741;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.bridge-link {
+  color: #4A6741;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.bridge-link:hover {
+  text-decoration: underline;
+}
+
+.concept-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: #999;
+}
+
+.concept-meta span {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: #f5f5f5;
+  border-radius: 12px;
+}
+
+.importance-indicator[data-importance="10"],
+.importance-indicator[data-importance="9"],
+.importance-indicator[data-importance="8"] {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.importance-indicator[data-importance="7"],
+.importance-indicator[data-importance="6"],
+.importance-indicator[data-importance="5"] {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.page-footer {
+  text-align: center;
+  margin-top: 4rem;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #4A6741;
+}
+
+.footer-link {
+  color: #4A6741;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .page-header h1 {
+    color: #7CB342;
+  }
+  
+  .subtitle {
+    color: #ccc;
+  }
+  
+  .posts-link {
+    background: #2a2a2a;
+    color: #7CB342;
+    border-color: #7CB342;
+  }
+  
+  .posts-link:hover {
+    background: #7CB342;
+    color: #1a1a1a;
+  }
+  
+  .category-title {
+    color: #7CB342;
+  }
+  
+  .concept-count {
+    background: #7CB342;
+    color: #1a1a1a;
+  }
+  
+  .concept-card {
+    background: #2a2a2a;
+    border-color: #404040;
+    color: #e0e0e0;
+  }
+  
+  .concept-card:hover {
+    border-color: #7CB342;
+  }
+  
+  .concept-card::before {
+    background: linear-gradient(90deg, #7CB342, #9ccc65);
+  }
+  
+  .concept-card h3 a {
+    color: #e0e0e0;
+  }
+  
+  .concept-card h3 a:hover {
+    color: #7CB342;
+  }
+  
+  .concept-definition {
+    color: #ccc;
+  }
+  
+  .bridge-indicator {
+    background: linear-gradient(135deg, #1a2a1a, #2a3a2a);
+    border-left-color: #7CB342;
+  }
+  
+  .bridge-label {
+    color: #7CB342;
+  }
+  
+  .bridge-link {
+    color: #7CB342;
+  }
+  
+  .concept-meta span {
+    background: #404040;
+    color: #ccc;
+  }
+  
+  .page-footer {
+    background: #2a2a2a;
+    border-left-color: #7CB342;
+  }
+  
+  .footer-link {
+    color: #7CB342;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .concepts-page {
+    padding: 1rem;
+  }
+  
+  .page-header h1 {
+    font-size: 2.5rem;
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .concept-nav {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .concept-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .category-section {
+    padding-left: 1rem;
+  }
+  
+  .concept-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+</style>

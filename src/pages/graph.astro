@@ -2,53 +2,34 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import KnowledgeGraph from "@/components/KnowledgeGraph.astro";
-import { getCollection } from "astro:content";
-import getSortedPosts from "@/utils/getSortedPosts";
+import UnifiedKnowledgeGraph from "@/components/UnifiedKnowledgeGraph.astro";
+import { buildUnifiedGraph, getGraphStats, getBridgeConnections } from "@/utils/unifiedGraph";
 
-const posts = await getCollection("blog");
-const sortedPosts = getSortedPosts(posts);
+// Build the unified graph with both posts and concepts
+const graph = await buildUnifiedGraph();
+const stats = await getGraphStats();
+const bridges = await getBridgeConnections();
 
-// Filter out draft posts
-const publishedPosts = sortedPosts.filter(post => !post.data.draft);
+// Separate posts and concepts for display
+const postNodes = graph.nodes.filter(n => n.type === 'post');
+const conceptNodes = graph.nodes.filter(n => n.type === 'concept');
 
-// Convert to the format expected by KnowledgeGraph
-const graphPosts = publishedPosts.map(post => ({
-  slug: post.id,
-  data: {
-    title: post.data.title,
-    tags: post.data.tags || [],
-    category: post.data.category,
-    importance: post.data.importance || 5,
-    connections: post.data.connections || [],
-    backlinks: post.data.backlinks || [],
-    relatedPosts: post.data.relatedPosts || [],
-    cluster: post.data.cluster,
-  }
-}));
-
-// Calculate graph statistics
-const totalPosts = graphPosts.length;
-const totalConnections = graphPosts.reduce((acc, post) => 
-  acc + (post.data.connections?.length || 0), 0
-);
-const categories = [...new Set(graphPosts.map(p => p.data.category).filter(Boolean))];
-const avgConnections = totalConnections / totalPosts;
-
-// Find most connected posts
-const mostConnected = graphPosts
-  .map(post => ({
-    ...post,
-    connectionCount: (post.data.connections?.length || 0) + (post.data.backlinks?.length || 0)
+// Find most connected nodes
+const mostConnected = graph.nodes
+  .map(node => ({
+    ...node,
+    connectionCount: graph.edges.filter(e => e.source === node.id || e.target === node.id).length
   }))
   .sort((a, b) => b.connectionCount - a.connectionCount)
-  .slice(0, 5);
+  .slice(0, 8);
 
-// Find isolated posts (no connections)
-const isolatedPosts = graphPosts.filter(post => 
-  (post.data.connections?.length || 0) === 0 && 
-  (post.data.backlinks?.length || 0) === 0
+// Find isolated nodes
+const isolatedNodes = graph.nodes.filter(node => 
+  graph.edges.filter(e => e.source === node.id || e.target === node.id).length === 0
 );
+
+// Get bridge connections for highlighting
+const bridgeEdges = graph.edges.filter(e => e.type === 'bridges');
 ---
 
 <Layout title="Knowledge Graph" description="Interactive visualization of blog post connections and relationships">
@@ -58,36 +39,46 @@ const isolatedPosts = graphPosts.filter(post =>
       <div class="mx-auto max-w-4xl px-6">
         <header class="mb-8">
           <h1 class="text-3xl font-bold text-foreground mb-4">
-            Knowledge Graph
+            Unified Knowledge Graph
           </h1>
           <p class="text-lg text-muted-foreground mb-6">
-            Explore the connections between ideas, concepts, and posts in this interactive knowledge map.
+            Explore the connections between blog posts and concepts in this interactive knowledge map. 
+            See how engineering principles bridge to product management insights.
           </p>
           
           <!-- Graph Statistics -->
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <div class="p-4 bg-muted/20 rounded-lg border border-muted">
-              <div class="text-2xl font-bold text-accent">{totalPosts}</div>
-              <div class="text-sm text-muted-foreground">Total Posts</div>
+              <div class="text-2xl font-bold text-accent">{stats.totalNodes}</div>
+              <div class="text-sm text-muted-foreground">Total Nodes</div>
             </div>
             <div class="p-4 bg-muted/20 rounded-lg border border-muted">
-              <div class="text-2xl font-bold text-accent">{totalConnections}</div>
+              <div class="text-2xl font-bold text-accent">{stats.posts}</div>
+              <div class="text-sm text-muted-foreground">Blog Posts</div>
+            </div>
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{stats.concepts}</div>
+              <div class="text-sm text-muted-foreground">Concepts</div>
+            </div>
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{stats.bridges}</div>
+              <div class="text-sm text-muted-foreground">Bridges</div>
+            </div>
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{stats.totalEdges}</div>
               <div class="text-sm text-muted-foreground">Connections</div>
-            </div>
-            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
-              <div class="text-2xl font-bold text-accent">{categories.length}</div>
-              <div class="text-sm text-muted-foreground">Categories</div>
-            </div>
-            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
-              <div class="text-2xl font-bold text-accent">{avgConnections.toFixed(1)}</div>
-              <div class="text-sm text-muted-foreground">Avg Connections</div>
             </div>
           </div>
         </header>
 
         <!-- Interactive Graph -->
         <div class="mb-8">
-          <KnowledgeGraph posts={graphPosts} width={800} height={600} />
+          <UnifiedKnowledgeGraph 
+            nodes={graph.nodes} 
+            edges={graph.edges} 
+            width={1000} 
+            height={700} 
+          />
         </div>
 
         <!-- Graph Analytics -->

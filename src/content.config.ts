@@ -43,4 +43,29 @@ const blog = defineCollection({
     }),
 });
 
-export const collections = { blog };
+const concepts = defineCollection({
+  type: 'content',
+  schema: ({ image }) =>
+    z.object({
+      term: z.string(),
+      definition: z.string().max(280), // Short definition for previews
+      category: z.enum(['engineering', 'cognitive-science', 'statistics', 'product', 'neuroai']),
+      aliases: z.array(z.string()).optional(), // Alternative names
+      related: z.array(z.string()).optional(), // Related concept IDs
+      opposite: z.array(z.string()).optional(), // Contrasting concepts
+      examples: z.array(z.object({
+        context: z.string(),
+        description: z.string()
+      })).optional(),
+      formula: z.string().optional(), // Mathematical notation if applicable
+      visualization: image().or(z.string()).optional(), // Path to diagram/image
+      bridgeFrom: z.string().optional(), // Engineering concept it maps from
+      bridgeTo: z.string().optional(), // Product/AI concept it maps to
+      firstIntroduced: z.string().optional(), // Blog post slug
+      weight: z.number().default(1), // Importance in graph (1-5)
+      importance: z.number().min(1).max(10).default(5), // Node size in graph
+      cluster: z.string().optional(), // Community/cluster assignment
+    }),
+});
+
+export const collections = { blog, concepts };

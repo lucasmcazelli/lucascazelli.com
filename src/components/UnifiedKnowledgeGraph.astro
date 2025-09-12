@@ -1,0 +1,742 @@
+---
+export interface Props {
+  nodes: Array<{
+    id: string;
+    label: string;
+    type: 'post' | 'concept';
+    category?: string;
+    weight: number;
+    url: string;
+    date?: Date;
+    definition?: string;
+    importance?: number;
+    cluster?: string;
+  }>;
+  edges: Array<{
+    source: string;
+    target: string;
+    type: 'references' | 'related' | 'bridges' | 'mentions' | 'connections';
+    weight: number;
+  }>;
+  width?: number;
+  height?: number;
+}
+
+const { nodes, edges, width = 1000, height = 700 } = Astro.props;
+---
+
+<div class="unified-graph-container">
+  <div class="graph-controls">
+    <div class="control-group">
+      <label for="node-filter">Filter by type:</label>
+      <select id="node-filter" class="filter-select">
+        <option value="all">All Nodes</option>
+        <option value="post">Blog Posts</option>
+        <option value="concept">Concepts</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <label for="edge-filter">Show connections:</label>
+      <select id="edge-filter" class="filter-select">
+        <option value="all">All Connections</option>
+        <option value="bridges">Bridges Only</option>
+        <option value="related">Related Only</option>
+        <option value="mentions">Mentions Only</option>
+      </select>
+    </div>
+    
+    <div class="control-group">
+      <button id="reset-layout" class="control-btn">Reset Layout</button>
+      <button id="center-graph" class="control-btn">Center View</button>
+    </div>
+  </div>
+  
+  <div class="graph-legend">
+    <div class="legend-item">
+      <div class="legend-node post-node"></div>
+      <span>Blog Posts</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-node concept-node"></div>
+      <span>Concepts</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-edge bridge-edge"></div>
+      <span>Bridges (Engineering ↔ Product)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-edge related-edge"></div>
+      <span>Related Concepts</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-edge mention-edge"></div>
+      <span>Post Mentions</span>
+    </div>
+  </div>
+  
+  <div id="graph-canvas" class="graph-canvas"></div>
+  
+  <div id="node-details" class="node-details hidden">
+    <div class="details-content">
+      <h4 id="details-title"></h4>
+      <p id="details-description"></p>
+      <div id="details-meta"></div>
+      <a id="details-link" href="#" class="details-link">Visit Page →</a>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ nodes, edges, width, height }}>
+import * as d3 from 'd3';
+
+// Graph configuration
+const config = {
+  width,
+  height,
+  nodeRadius: { post: 8, concept: 6 },
+  nodeColors: {
+    post: '#4A6741',
+    concept: '#7CB342',
+    highlight: '#FF6B6B'
+  },
+  edgeColors: {
+    bridges: '#FF6B6B',
+    related: '#999',
+    mentions: '#DDD',
+    connections: '#4A6741',
+    references: '#7CB342'
+  },
+  edgeWidths: {
+    bridges: 3,
+    related: 1,
+    mentions: 1,
+    connections: 2,
+    references: 2
+  }
+};
+
+// Initialize graph
+let svg, g, simulation;
+let allNodes, allEdges, filteredNodes, filteredEdges;
+
+function initGraph() {
+  // Clear existing graph
+  d3.select('#graph-canvas').selectAll('*').remove();
+  
+  // Create SVG
+  svg = d3.select('#graph-canvas')
+    .append('svg')
+    .attr('viewBox', [0, 0, config.width, config.height])
+    .attr('class', 'graph-svg');
+
+  // Add zoom behavior
+  const zoom = d3.zoom()
+    .scaleExtent([0.3, 4])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform);
+    });
+
+  svg.call(zoom);
+
+  // Create main group
+  g = svg.append('g');
+
+  // Create force simulation
+  simulation = d3.forceSimulation()
+    .force('link', d3.forceLink().id(d => d.id).distance(d => getLinkDistance(d)))
+    .force('charge', d3.forceManyBody().strength(d => getChargeStrength(d)))
+    .force('center', d3.forceCenter(config.width / 2, config.height / 2))
+    .force('collision', d3.forceCollide().radius(d => getCollisionRadius(d)));
+
+  // Store original data
+  allNodes = [...nodes];
+  allEdges = [...edges];
+  
+  // Initial render
+  applyFilters();
+}
+
+function getLinkDistance(link) {
+  switch (link.type) {
+    case 'bridges': return 120;
+    case 'related': return 80;
+    case 'mentions': return 60;
+    case 'connections': return 100;
+    default: return 80;
+  }
+}
+
+function getChargeStrength(node) {
+  if (node.type === 'post') return -400;
+  if (node.type === 'concept') return -200;
+  return -300;
+}
+
+function getCollisionRadius(node) {
+  const baseRadius = config.nodeRadius[node.type] || 6;
+  const importanceMultiplier = (node.importance || 5) / 5;
+  return baseRadius * importanceMultiplier + 8;
+}
+
+function applyFilters() {
+  const nodeFilter = document.getElementById('node-filter')?.value || 'all';
+  const edgeFilter = document.getElementById('edge-filter')?.value || 'all';
+  
+  // Filter nodes
+  filteredNodes = allNodes.filter(node => {
+    if (nodeFilter === 'all') return true;
+    return node.type === nodeFilter;
+  });
+  
+  // Filter edges based on visible nodes and edge type
+  filteredEdges = allEdges.filter(edge => {
+    const sourceVisible = filteredNodes.some(n => n.id === edge.source);
+    const targetVisible = filteredNodes.some(n => n.id === edge.target);
+    
+    if (!sourceVisible || !targetVisible) return false;
+    
+    if (edgeFilter === 'all') return true;
+    return edge.type === edgeFilter;
+  });
+  
+  renderGraph();
+}
+
+function renderGraph() {
+  // Remove existing elements
+  g.selectAll('.link').remove();
+  g.selectAll('.node').remove();
+  g.selectAll('.label').remove();
+  
+  // Create links
+  const link = g.append('g')
+    .attr('class', 'links')
+    .selectAll('.link')
+    .data(filteredEdges)
+    .join('line')
+    .attr('class', 'link')
+    .attr('stroke', d => config.edgeColors[d.type] || '#999')
+    .attr('stroke-width', d => config.edgeWidths[d.type] || 1)
+    .attr('stroke-opacity', 0.6)
+    .attr('stroke-dasharray', d => {
+      if (d.type === 'related') return '3,3';
+      if (d.type === 'mentions') return '1,1';
+      return 'none';
+    });
+
+  // Create nodes
+  const node = g.append('g')
+    .attr('class', 'nodes')
+    .selectAll('.node')
+    .data(filteredNodes)
+    .join('g')
+    .attr('class', 'node')
+    .call(drag(simulation));
+
+  // Add node shapes
+  node.each(function(d) {
+    const selection = d3.select(this);
+    
+    if (d.type === 'post') {
+      // Circle for posts
+      selection.append('circle')
+        .attr('r', d => {
+          const baseRadius = config.nodeRadius.post;
+          const importanceMultiplier = (d.importance || 5) / 5;
+          return baseRadius * importanceMultiplier;
+        })
+        .attr('fill', config.nodeColors.post)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2);
+    } else {
+      // Diamond for concepts
+      const size = (() => {
+        const baseRadius = config.nodeRadius.concept;
+        const importanceMultiplier = (d.importance || 5) / 5;
+        return baseRadius * importanceMultiplier;
+      })();
+      
+      selection.append('path')
+        .attr('d', d3.symbol().type(d3.symbolDiamond).size(size * 20))
+        .attr('fill', config.nodeColors.concept)
+        .attr('stroke', '#fff')
+        .attr('stroke-width', 2);
+    }
+  });
+
+  // Add labels
+  const label = g.append('g')
+    .attr('class', 'labels')
+    .selectAll('.label')
+    .data(filteredNodes)
+    .join('text')
+    .attr('class', 'label')
+    .text(d => d.label)
+    .style('font-size', d => d.type === 'post' ? '12px' : '10px')
+    .style('font-weight', d => d.type === 'post' ? 'bold' : 'normal')
+    .style('fill', '#333')
+    .style('text-anchor', 'middle')
+    .style('dominant-baseline', 'middle');
+
+  // Add interactivity
+  node.on('mouseover', function(event, d) {
+    highlightConnected(d);
+    showNodeDetails(d);
+  });
+
+  node.on('mouseout', function() {
+    resetHighlight();
+    hideNodeDetails();
+  });
+
+  node.on('click', function(event, d) {
+    if (event.ctrlKey || event.metaKey) {
+      window.open(d.url, '_blank');
+    } else {
+      window.location.href = d.url;
+    }
+  });
+
+  // Update simulation
+  simulation
+    .nodes(filteredNodes)
+    .force('link', d3.forceLink(filteredEdges).id(d => d.id).distance(d => getLinkDistance(d)))
+    .alpha(0.3)
+    .restart();
+
+  // Update positions on tick
+  simulation.on('tick', () => {
+    link
+      .attr('x1', d => d.source.x)
+      .attr('y1', d => d.source.y)
+      .attr('x2', d => d.target.x)
+      .attr('y2', d => d.target.y);
+
+    node.attr('transform', d => `translate(${d.x},${d.y})`);
+    label.attr('x', d => d.x).attr('y', d => d.y);
+  });
+}
+
+function drag(simulation) {
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+
+  return d3.drag()
+    .on('start', dragstarted)
+    .on('drag', dragged)
+    .on('end', dragended);
+}
+
+function highlightConnected(d) {
+  const connected = new Set();
+  
+  // Find connected nodes
+  filteredEdges.forEach(edge => {
+    if (edge.source.id === d.id) connected.add(edge.target.id);
+    if (edge.target.id === d.id) connected.add(edge.source.id);
+  });
+
+  // Highlight connected nodes and edges
+  g.selectAll('.node').style('opacity', n => 
+    n.id === d.id || connected.has(n.id) ? 1 : 0.3
+  );
+  
+  g.selectAll('.link').style('opacity', l => 
+    l.source.id === d.id || l.target.id === d.id ? 1 : 0.2
+  );
+  
+  g.selectAll('.label').style('opacity', n => 
+    n.id === d.id || connected.has(n.id) ? 1 : 0.3
+  );
+}
+
+function resetHighlight() {
+  g.selectAll('.node').style('opacity', 1);
+  g.selectAll('.link').style('opacity', 0.6);
+  g.selectAll('.label').style('opacity', 1);
+}
+
+function showNodeDetails(node) {
+  const detailsPanel = document.getElementById('node-details');
+  const title = document.getElementById('details-title');
+  const description = document.getElementById('details-description');
+  const meta = document.getElementById('details-meta');
+  const link = document.getElementById('details-link');
+  
+  title.textContent = node.label;
+  description.textContent = node.definition || node.label;
+  link.href = node.url;
+  
+  // Build meta information
+  let metaHTML = `<div class="node-type-badge ${node.type}">${node.type}</div>`;
+  
+  if (node.category) {
+    metaHTML += `<div class="node-category">${node.category}</div>`;
+  }
+  
+  if (node.date) {
+    metaHTML += `<div class="node-date">${new Date(node.date).toLocaleDateString()}</div>`;
+  }
+  
+  if (node.importance) {
+    metaHTML += `<div class="node-importance">Importance: ${node.importance}/10</div>`;
+  }
+  
+  meta.innerHTML = metaHTML;
+  detailsPanel.classList.remove('hidden');
+}
+
+function hideNodeDetails() {
+  document.getElementById('node-details').classList.add('hidden');
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  initGraph();
+  
+  // Filter controls
+  document.getElementById('node-filter')?.addEventListener('change', applyFilters);
+  document.getElementById('edge-filter')?.addEventListener('change', applyFilters);
+  
+  // Control buttons
+  document.getElementById('reset-layout')?.addEventListener('click', () => {
+    simulation.alpha(0.3).restart();
+  });
+  
+  document.getElementById('center-graph')?.addEventListener('click', () => {
+    const bounds = g.node().getBBox();
+    const fullWidth = config.width;
+    const fullHeight = config.height;
+    const widthScale = fullWidth / bounds.width;
+    const heightScale = fullHeight / bounds.height;
+    const scale = Math.min(widthScale, heightScale) * 0.8;
+    
+    const translate = [
+      fullWidth / 2 - scale * (bounds.x + bounds.width / 2),
+      fullHeight / 2 - scale * (bounds.y + bounds.height / 2)
+    ];
+    
+    svg.transition().duration(750).call(
+      d3.zoom().transform,
+      d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+    );
+  });
+});
+</script>
+
+<style>
+.unified-graph-container {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.graph-controls {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e5e5;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.control-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+}
+
+.filter-select {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: white;
+}
+
+.control-btn {
+  padding: 0.5rem 1rem;
+  background: #4A6741;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.control-btn:hover {
+  background: #2d4a2d;
+}
+
+.graph-legend {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e5e5;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #666;
+}
+
+.legend-node {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.post-node {
+  background: #4A6741;
+}
+
+.concept-node {
+  background: #7CB342;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
+
+.legend-edge {
+  width: 20px;
+  height: 2px;
+  background: #999;
+}
+
+.bridge-edge {
+  background: #FF6B6B;
+}
+
+.related-edge {
+  background: #999;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #999 0,
+    #999 3px,
+    transparent 3px,
+    transparent 6px
+  );
+}
+
+.mention-edge {
+  background: #DDD;
+  background-image: repeating-linear-gradient(
+    90deg,
+    #DDD 0,
+    #DDD 1px,
+    transparent 1px,
+    transparent 2px
+  );
+}
+
+.graph-canvas {
+  position: relative;
+  width: 100%;
+  height: 700px;
+  background: #fafafa;
+}
+
+.graph-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.node-details {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+  z-index: 10;
+}
+
+.node-details.hidden {
+  display: none;
+}
+
+.details-content h4 {
+  margin: 0 0 0.5rem 0;
+  color: #4A6741;
+  font-size: 1.1rem;
+}
+
+.details-content p {
+  margin: 0 0 0.75rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.details-meta {
+  margin-bottom: 0.75rem;
+}
+
+.node-type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.node-type-badge.post {
+  background: #e8f5e8;
+  color: #4A6741;
+}
+
+.node-type-badge.concept {
+  background: #f0f7f0;
+  color: #7CB342;
+}
+
+.node-category, .node-date, .node-importance {
+  font-size: 0.8rem;
+  color: #999;
+  margin-bottom: 0.25rem;
+}
+
+.details-link {
+  color: #4A6741;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.details-link:hover {
+  text-decoration: underline;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .unified-graph-container {
+    background: #1a1a1a;
+    border-color: #404040;
+  }
+  
+  .graph-controls {
+    background: #2a2a2a;
+    border-bottom-color: #404040;
+  }
+  
+  .control-group label {
+    color: #ccc;
+  }
+  
+  .filter-select {
+    background: #2a2a2a;
+    border-color: #404040;
+    color: #e0e0e0;
+  }
+  
+  .control-btn {
+    background: #7CB342;
+  }
+  
+  .control-btn:hover {
+    background: #9ccc65;
+  }
+  
+  .graph-legend {
+    background: #2a2a2a;
+    border-bottom-color: #404040;
+    color: #ccc;
+  }
+  
+  .graph-canvas {
+    background: #1a1a1a;
+  }
+  
+  .node-details {
+    background: #2a2a2a;
+    border-color: #404040;
+  }
+  
+  .details-content h4 {
+    color: #7CB342;
+  }
+  
+  .details-content p {
+    color: #ccc;
+  }
+  
+  .node-type-badge.post {
+    background: #1a2a1a;
+    color: #7CB342;
+  }
+  
+  .node-type-badge.concept {
+    background: #1a2a1a;
+    color: #9ccc65;
+  }
+  
+  .node-category, .node-date, .node-importance {
+    color: #999;
+  }
+  
+  .details-link {
+    color: #7CB342;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .graph-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .control-group {
+    justify-content: space-between;
+  }
+  
+  .graph-legend {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .graph-canvas {
+    height: 500px;
+  }
+  
+  .node-details {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin: 1rem;
+    max-width: none;
+  }
+}
+</style>
