@@ -7,8 +7,10 @@ import IconWhatsapp from "@/assets/icons/IconWhatsapp.svg";
 import IconFacebook from "@/assets/icons/IconFacebook.svg";
 import IconTelegram from "@/assets/icons/IconTelegram.svg";
 import IconPinterest from "@/assets/icons/IconPinterest.svg";
-import IconHash from "@/assets/icons/IconHash.svg";
 import { SITE } from "@/config";
+import IconCloud from "@/assets/icons/IconCloud.svg";
+import IconBookOpen from "@/assets/icons/IconBookOpen.svg";
+import IconHelpCircle from "@/assets/icons/IconHelpCircle.svg";
 
 interface Social {
   name: string;
@@ -40,19 +42,19 @@ export const SOCIALS: Social[] = [
     name: "Bluesky",
     href: "https://bsky.app/profile/lucascazelli.bsky.social",
     linkTitle: `${SITE.title} on Bluesky`,
-    icon: IconBrandX, // Using X icon as placeholder
+    icon: IconCloud,
   },
   {
     name: "Medium",
     href: "https://medium.com/@lucas.mcazelli",
     linkTitle: `${SITE.title} on Medium`,
-    icon: IconMail, // Using mail icon as placeholder
+    icon: IconBookOpen,
   },
   {
     name: "Quora",
     href: "https://www.quora.com/profile/Lucas-Mischiatti-Cazelli",
     linkTitle: `${SITE.title} on Quora`,
-    icon: IconHash, // Using hash icon as placeholder
+    icon: IconHelpCircle,
   },
   {
     name: "Mail",

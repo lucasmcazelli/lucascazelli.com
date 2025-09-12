@@ -45,25 +45,39 @@ const recentPosts = publishedPosts.filter(({ data }) => !data.featured);
         <span class="sr-only">RSS Feed</span>
       </a>
 
-      <p>
-        Exploring how the brain makes product decisions. 
-        Insights on cognitive psychology, statistical thinking, and NeuroAI applications in product development. Currently building synthetic audiences at North AI.
-        <b>Focus Areas</b>
-        - Cognitive science applications in product management
-        - Statistical methods for user behavior analysis
-        - Neuroscience-inspired AI for video analytics
-        - Deep technical implementations of research papers
-        - Product discovery and experimentation frameworks
-      </p>
-      <p class="mt-2">
-        Read the blog posts or check
-        <LinkButton
-          class="underline decoration-dashed underline-offset-4 hover:text-accent"
-          href="https://github.com/satnaing/astro-paper#readme"
-        >
-          README
-        </LinkButton> for more info.
-      </p>
+      <div class="space-y-4">
+        <p class="text-lg leading-relaxed">
+          Exploring how the brain makes product decisions. Insights on cognitive psychology, 
+          statistical thinking, and NeuroAI applications in product development. 
+          Currently building synthetic audiences at North AI.
+        </p>
+        
+        <div>
+          <h3 class="text-lg font-semibold mb-3 text-accent">Focus Areas</h3>
+          <ul class="space-y-2 text-muted-foreground">
+            <li class="flex items-start">
+              <span class="text-accent mr-2">•</span>
+              <span>Cognitive science applications in product management</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-accent mr-2">•</span>
+              <span>Statistical methods for user behavior analysis</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-accent mr-2">•</span>
+              <span>Neuroscience-inspired AI for video analytics</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-accent mr-2">•</span>
+              <span>Deep technical implementations of research papers</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-accent mr-2">•</span>
+              <span>Product discovery and experimentation frameworks</span>
+            </li>
+          </ul>
+        </div>
+      </div>
       {
         // only display if at least one social link is enabled
         SOCIALS.length > 0 && (
