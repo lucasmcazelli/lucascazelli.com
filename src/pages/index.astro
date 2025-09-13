@@ -7,7 +7,7 @@ import Socials from "@/components/Socials.astro";
 import LinkButton from "@/components/LinkButton.astro";
 import Card from "@/components/Card.astro";
 import Hr from "@/components/Hr.astro";
-import KnowledgeGraph from "@/components/KnowledgeGraph.astro";
+// import KnowledgeGraph from "@/components/KnowledgeGraph.astro";
 import getSortedPosts from "@/utils/getSortedPosts";
 import IconRss from "@/assets/icons/IconRss.svg";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
@@ -137,23 +137,10 @@ const recentPosts = publishedPosts.filter(({ data }) => !data.featured);
       
       <!-- Mini Knowledge Graph -->
       <div class="bg-muted/20 rounded-lg border border-muted p-6">
-        <KnowledgeGraph 
-          posts={publishedPosts.map(post => ({
-            slug: post.id,
-            data: {
-              title: post.data.title,
-              tags: post.data.tags || [],
-              category: post.data.category,
-              importance: post.data.importance || 5,
-              connections: post.data.connections || [],
-              backlinks: post.data.backlinks || [],
-              relatedPosts: post.data.relatedPosts || [],
-              cluster: post.data.cluster,
-            }
-          }))} 
-          width={600} 
-          height={400} 
-        />
+        <div class="text-center">
+          <h3 class="text-lg font-semibold text-accent mb-4">Knowledge Graph</h3>
+          <p class="text-muted-foreground">Interactive graph visualization coming soon!</p>
+        </div>
       </div>
     </section>
 

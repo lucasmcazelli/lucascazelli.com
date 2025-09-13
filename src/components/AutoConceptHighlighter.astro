@@ -1,0 +1,194 @@
+---
+// AutoConceptHighlighter.astro - Automatically highlights concept terms in blog posts
+import { getCollection } from 'astro:content';
+
+// Get concept data at build time
+const concepts = await getCollection('concepts');
+const conceptTerms = new Map();
+
+concepts.forEach(concept => {
+  const conceptId = concept.id.replace('.md', '');
+  // Map the main term
+  conceptTerms.set(concept.data.term.toLowerCase(), conceptId);
+  
+  // Map aliases if they exist
+  if (concept.data.aliases) {
+    concept.data.aliases.forEach(alias => {
+      conceptTerms.set(alias.toLowerCase(), conceptId);
+    });
+  }
+});
+
+// Convert to JSON for client-side use
+const conceptTermsJson = JSON.stringify(Object.fromEntries(conceptTerms));
+---
+
+<script define:vars={{ conceptTermsJson }}>
+// Auto-highlighting functionality for concept terms
+document.addEventListener('DOMContentLoaded', () => {
+  // Parse concept terms from server
+  const conceptTerms = new Map(Object.entries(JSON.parse(conceptTermsJson)));
+  
+  console.log('Loaded concept terms:', conceptTerms);
+  
+  // Highlight concept terms in text content
+  function highlightConceptTerms(element) {
+    if (!element || element.tagName === 'SCRIPT' || element.tagName === 'STYLE') {
+      return;
+    }
+    
+    // Skip if already processed
+    if (element.dataset.conceptHighlighted) {
+      return;
+    }
+    
+    element.dataset.conceptHighlighted = 'true';
+    
+    // Process text nodes
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: function(node) {
+          // Skip text nodes that are inside code blocks, links, or other special elements
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          
+          if (parent.tagName === 'CODE' || 
+              parent.tagName === 'PRE' || 
+              parent.tagName === 'A' ||
+              parent.classList.contains('concept-link') ||
+              parent.classList.contains('concept-highlighted')) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+    
+    const textNodes = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node);
+    }
+    
+    textNodes.forEach(textNode => {
+      const text = textNode.textContent;
+      if (!text || text.trim().length < 3) return;
+      
+      // Find concept terms in the text
+      let highlightedText = text;
+      let hasMatches = false;
+      
+      // Sort terms by length (longest first) to avoid partial matches
+      const sortedTerms = Array.from(conceptTerms.keys()).sort((a, b) => b.length - a.length);
+      
+      sortedTerms.forEach(term => {
+        const regex = new RegExp(`\\b${escapeRegExp(term)}\\b`, 'gi');
+        if (highlightedText.match(regex)) {
+          const conceptId = conceptTerms.get(term);
+          highlightedText = highlightedText.replace(regex, (match) => {
+            hasMatches = true;
+            return `<span class="concept-highlighted" data-concept="${conceptId}" title="Click to learn about ${match}">${match}</span>`;
+          });
+        }
+      });
+      
+      if (hasMatches) {
+        const wrapper = document.createElement('span');
+        wrapper.innerHTML = highlightedText;
+        
+        // Replace the text node with the highlighted version
+        textNode.parentNode.replaceChild(wrapper, textNode);
+      }
+    });
+  }
+  
+  // Escape special regex characters
+  function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  
+  // Initialize highlighting
+  function initializeHighlighting() {
+    // Highlight concepts in the main content area
+    const contentSelectors = [
+      'article',
+      '.blog-post-content',
+      '.post-content',
+      'main',
+      '.content'
+    ];
+    
+    let contentElement = null;
+    for (const selector of contentSelectors) {
+      contentElement = document.querySelector(selector);
+      if (contentElement) break;
+    }
+    
+    if (contentElement) {
+      highlightConceptTerms(contentElement);
+    }
+    
+    // Also highlight in any other content areas
+    document.querySelectorAll('p, li, div:not(.concept-modal):not(.modal-content)').forEach(el => {
+      highlightConceptTerms(el);
+    });
+  }
+  
+  // Initialize highlighting
+  initializeHighlighting();
+});
+</script>
+
+<style>
+.concept-highlighted {
+  background: linear-gradient(120deg, #4A6741 0%, #4A6741 100%);
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  background-position: 0% 100%;
+  color: inherit;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0 2px;
+  border-radius: 2px;
+  position: relative;
+}
+
+.concept-highlighted:hover {
+  background-size: 100% 100%;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(74, 103, 65, 0.3);
+}
+
+.concept-highlighted::after {
+  content: '📖';
+  opacity: 0;
+  position: absolute;
+  right: -16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8em;
+  transition: opacity 0.2s ease;
+}
+
+.concept-highlighted:hover::after {
+  opacity: 1;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .concept-highlighted {
+    background: linear-gradient(120deg, #7CB342 0%, #7CB342 100%);
+    background-repeat: no-repeat;
+    background-size: 0% 100%;
+    background-position: 0% 100%;
+  }
+  
+  .concept-highlighted:hover {
+    box-shadow: 0 2px 4px rgba(124, 179, 66, 0.3);
+  }
+}
+</style>

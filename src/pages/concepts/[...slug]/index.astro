@@ -28,6 +28,8 @@ const relatedPosts = posts.filter(post => {
   const term = concept.data.term;
   const aliases = concept.data.aliases || [];
   
+  if (!content) return false;
+  
   return content.includes(term) || 
          aliases.some(alias => content.includes(alias));
 }).slice(0, 3);
@@ -63,7 +65,7 @@ const relatedPosts = posts.filter(post => {
           <ul>
             {relatedPosts.map(post => (
               <li>
-                <a href={`/posts/${post.slug}`}>{post.data.title}</a>
+                <a href={`/posts/${post.id}`}>{post.data.title}</a>
                 <span class="post-date">
                   {new Date(post.data.pubDatetime).toLocaleDateString()}
                 </span>

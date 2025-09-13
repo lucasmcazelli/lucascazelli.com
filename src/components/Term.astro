@@ -1,0 +1,39 @@
+---
+// Term.astro - Shorthand component for concept linking
+export interface Props {
+  id: string;
+  children?: string;
+  showPreview?: boolean;
+}
+
+const { id, children, showPreview = true } = Astro.props;
+const displayText = children || id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+---
+
+<a
+  href={`/concepts/${id}`}
+  class="concept-link"
+  data-concept={id}
+  data-preview={showPreview}
+  title={`Learn about ${displayText}`}
+>
+  {displayText}
+</a>
+
+<style>
+.concept-link {
+  color: #4A6741;
+  text-decoration: underline;
+  text-decoration-color: #4A6741;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.concept-link:hover {
+  color: #2d4a2a;
+  text-decoration-color: #2d4a2a;
+  text-decoration-thickness: 2px;
+}
+</style>

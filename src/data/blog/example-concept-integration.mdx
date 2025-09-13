@@ -15,29 +15,30 @@ description: "How engineering principles like finite element analysis can be app
 connections: ["geometric-division", "cognitive-load-distribution", "temporal-segmentation"]
 ---
 
-import { ConceptLink, Term, ConceptBridge, ConceptComparison } from '../../components/ConceptLink';
+import ConceptLink from '../../components/ConceptLink.astro';
+import Term from '../../components/Term.astro';
 
 # From Finite Elements to Finite Attention
 
 The technical challenge mirrors finite element analysis in interesting ways:
 
-* <ConceptBridge from="geometric-division" to="temporal-segmentation" />: Instead of dividing structures into spatial elements, we divide attention into time-based segments
+* **<ConceptLink concept="geometric-division">Geometric Division</ConceptLink> → Temporal Segmentation**: Instead of dividing structures into spatial elements, we divide attention into time-based segments
 
-* <ConceptBridge from="stress-distribution" to="cognitive-load-distribution" />: Instead of calculating mechanical stress, we model mental effort across different cognitive systems
+* **<ConceptLink concept="cognitive-load-distribution">Stress Distribution → Cognitive Load Distribution</ConceptLink>**: Instead of calculating mechanical stress, we model mental effort across different cognitive systems
 
-* <Term id="material-failure" /> → <Term id="engagement-dropoff" />: Instead of predicting structural failure, we predict when audiences will stop paying attention
+* **Material Failure → Engagement Dropoff**: Instead of predicting structural failure, we predict when audiences will stop paying attention
 
-When you understand <Term id="finite-element-method" />, you realize that attention engineering isn't so different from structural engineering. We're just working with neurons instead of steel beams.
+When you understand **finite element methods**, you realize that attention engineering isn't so different from structural engineering. We're just working with neurons instead of steel beams.
 
 ## The Engineering Foundation
 
-In structural engineering, we use <Term id="geometric-division" /> to break down complex structures into manageable pieces. Each element has its own stress characteristics, and when we combine them, we get a complete picture of how the structure behaves under load.
+In structural engineering, we use <ConceptLink concept="geometric-division">geometric division</ConceptLink> to break down complex structures into manageable pieces. Each element has its own stress characteristics, and when we combine them, we get a complete picture of how the structure behaves under load.
 
-<ConceptComparison engineering="geometric-division" product="temporal-segmentation" />
+**Engineering**: <ConceptLink concept="geometric-division">Geometric Division</ConceptLink> | **Product**: Temporal Segmentation
 
 ## The Cognitive Parallel
 
-Just as engineers divide physical structures, we can divide mental processes. <Term id="cognitive-load-distribution" /> shows us how mental effort spreads across different processing systems.
+Just as engineers divide physical structures, we can divide mental processes. <ConceptLink concept="cognitive-load-distribution">Cognitive load distribution</ConceptLink> shows us how mental effort spreads across different processing systems.
 
 ### The Load Formula
 
@@ -59,17 +60,17 @@ CL(t) = Σ(System1(t) × 0.3 + System2(t) × 1.0)
 
 When designing video content, we apply the same principles:
 
-1. **<Term id="geometric-division" />** - Break the video into time segments
-2. **<Term id="cognitive-load-distribution" />** - Monitor mental effort across segments  
+1. **<ConceptLink concept="geometric-division">Geometric Division</ConceptLink>** - Break the video into time segments
+2. **<ConceptLink concept="cognitive-load-distribution">Cognitive Load Distribution</ConceptLink>** - Monitor mental effort across segments  
 3. **Failure prediction** - Identify when viewers will drop off
 
 ### Product Interface Design
 
 The same approach works for user interfaces:
 
-- **<Term id="spatial-analysis" />** becomes **<Term id="visual-hierarchy" />**
-- **<Term id="load-paths" />** becomes **<Term id="user-journeys" />**
-- **<Term id="stress-concentration" />** becomes **<Term id="cognitive-overload" />**
+- **Spatial Analysis** becomes **Visual Hierarchy**
+- **Load Paths** becomes **User Journeys**
+- **Stress Concentration** becomes **Cognitive Overload**
 
 ## The Bridge Between Disciplines
 
@@ -91,7 +92,7 @@ Understanding these parallels helps us:
 
 ## Conclusion
 
-The bridge between engineering and product design isn't just conceptual—it's mathematical. When we understand how <Term id="stress-distribution" /> works in materials, we can apply the same principles to <Term id="cognitive-load-distribution" /> in human minds.
+The bridge between engineering and product design isn't just conceptual—it's mathematical. When we understand how **stress distribution** works in materials, we can apply the same principles to <ConceptLink concept="cognitive-load-distribution">cognitive load distribution</ConceptLink> in human minds.
 
 The tools are different, but the thinking is the same. And that's what makes this approach so powerful.
 

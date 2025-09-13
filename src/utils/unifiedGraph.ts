@@ -34,13 +34,14 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
   
   // Add blog posts as nodes
   posts.forEach(post => {
+    const postSlug = post.id; // Use id instead of slug
     nodes.push({
-      id: `post-${post.slug}`,
+      id: `post-${postSlug}`,
       label: post.data.title,
       type: 'post',
       category: post.data.category,
       weight: post.data.importance || 2,
-      url: `/posts/${post.slug}`,
+      url: `/posts/${postSlug}`,
       date: post.data.pubDatetime,
       importance: post.data.importance,
       cluster: post.data.cluster
@@ -49,7 +50,7 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
     // Add post-to-post connections
     post.data.connections?.forEach(targetId => {
       edges.push({
-        source: `post-${post.slug}`,
+        source: `post-${postSlug}`,
         target: `post-${targetId}`,
         type: 'connections',
         weight: 1
@@ -105,22 +106,26 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
   // Extract concepts mentioned in posts
   posts.forEach(post => {
     const content = post.body;
-    concepts.forEach(concept => {
-      // Check if the concept term or any aliases are mentioned in the post
-      const isMentioned = content.includes(concept.data.term) || 
-                         concept.data.aliases?.some(alias => content.includes(alias)) ||
-                         content.includes(`concept-${concept.slug}`) ||
-                         content.includes(`/concepts/${concept.slug}`);
-      
-      if (isMentioned) {
-        edges.push({
-          source: `post-${post.slug}`,
-          target: `concept-${concept.slug}`,
-          type: 'mentions',
-          weight: 0.3
-        });
-      }
-    });
+    const postSlug = post.id;
+    
+    if (content) {
+      concepts.forEach(concept => {
+        // Check if the concept term or any aliases are mentioned in the post
+        const isMentioned = content.includes(concept.data.term) || 
+                           concept.data.aliases?.some(alias => content.includes(alias)) ||
+                           content.includes(`concept-${concept.slug}`) ||
+                           content.includes(`/concepts/${concept.slug}`);
+        
+        if (isMentioned) {
+          edges.push({
+            source: `post-${postSlug}`,
+            target: `concept-${concept.slug}`,
+            type: 'mentions',
+            weight: 0.3
+          });
+        }
+      });
+    }
   });
   
   // Add concept-to-post connections (concepts introduced in posts)

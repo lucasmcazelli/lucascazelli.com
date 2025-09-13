@@ -2,34 +2,19 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-import UnifiedKnowledgeGraph from "@/components/UnifiedKnowledgeGraph.astro";
-import { buildUnifiedGraph, getGraphStats, getBridgeConnections } from "@/utils/unifiedGraph";
+// import UnifiedKnowledgeGraph from "@/components/UnifiedKnowledgeGraph.astro";
+// import { buildUnifiedGraph, getGraphStats, getBridgeConnections } from "@/utils/unifiedGraph";
 
 // Build the unified graph with both posts and concepts
-const graph = await buildUnifiedGraph();
-const stats = await getGraphStats();
-const bridges = await getBridgeConnections();
+// const graph = await buildUnifiedGraph();
+// const stats = await getGraphStats();
 
-// Separate posts and concepts for display
-const postNodes = graph.nodes.filter(n => n.type === 'post');
-const conceptNodes = graph.nodes.filter(n => n.type === 'concept');
-
-// Find most connected nodes
-const mostConnected = graph.nodes
-  .map(node => ({
-    ...node,
-    connectionCount: graph.edges.filter(e => e.source === node.id || e.target === node.id).length
-  }))
-  .sort((a, b) => b.connectionCount - a.connectionCount)
-  .slice(0, 8);
-
-// Find isolated nodes
-const isolatedNodes = graph.nodes.filter(node => 
-  graph.edges.filter(e => e.source === node.id || e.target === node.id).length === 0
-);
-
-// Get bridge connections for highlighting
-const bridgeEdges = graph.edges.filter(e => e.type === 'bridges');
+// Temporary placeholder data
+const stats = { totalNodes: 0, totalEdges: 0, posts: 0, concepts: 0, bridges: 0, categories: {} };
+const mostConnected = [];
+const isolatedNodes = [];
+const categories = [];
+const totalPosts = 0;
 ---
 
 <Layout title="Knowledge Graph" description="Interactive visualization of blog post connections and relationships">
@@ -73,12 +58,10 @@ const bridgeEdges = graph.edges.filter(e => e.type === 'bridges');
 
         <!-- Interactive Graph -->
         <div class="mb-8">
-          <UnifiedKnowledgeGraph 
-            nodes={graph.nodes} 
-            edges={graph.edges} 
-            width={1000} 
-            height={700} 
-          />
+          <div class="p-8 bg-muted/20 rounded-lg border border-muted text-center">
+            <h3 class="text-lg font-semibold text-accent mb-4">Knowledge Graph</h3>
+            <p class="text-muted-foreground">Graph visualization coming soon!</p>
+          </div>
         </div>
 
         <!-- Graph Analytics -->
@@ -89,23 +72,26 @@ const bridgeEdges = graph.edges.filter(e => e.type === 'bridges');
               Most Connected Posts
             </h3>
             <div class="space-y-3">
-              {mostConnected.map((post) => (
+              {mostConnected.map((node) => (
                 <div class="flex items-center justify-between p-3 bg-background rounded border border-muted">
                   <div class="flex-1">
                     <a 
-                      href={`/posts/${post.slug}`}
+                      href={node.url}
                       class="font-medium text-foreground hover:text-accent"
                     >
-                      {post.data.title}
+                      {node.label}
                     </a>
                     <div class="text-sm text-muted-foreground">
-                      {post.data.category && (
-                        <span class="capitalize">{post.data.category}</span>
+                      {node.category && (
+                        <span class="capitalize">{node.category}</span>
                       )}
+                      <span class="ml-2 text-xs bg-muted px-2 py-1 rounded">
+                        {node.type}
+                      </span>
                     </div>
                   </div>
                   <div class="text-sm font-medium text-accent">
-                    {post.connectionCount} links
+                    {node.connectionCount} links
                   </div>
                 </div>
               ))}
@@ -119,8 +105,8 @@ const bridgeEdges = graph.edges.filter(e => e.type === 'bridges');
             </h3>
             <div class="space-y-3">
               {categories.map(category => {
-                const count = graphPosts.filter(p => p.data.category === category).length;
-                const percentage = (count / totalPosts) * 100;
+                const count = graph.nodes.filter(n => n.category === category).length;
+                const percentage = totalPosts > 0 ? (count / totalPosts) * 100 : 0;
                 return (
                   <div class="flex items-center justify-between">
                     <span class="capitalize text-foreground">{category}</span>
@@ -140,26 +126,29 @@ const bridgeEdges = graph.edges.filter(e => e.type === 'bridges');
           </div>
         </div>
 
-        <!-- Isolated Posts (if any) -->
-        {isolatedPosts.length > 0 && (
+        <!-- Isolated Nodes (if any) -->
+        {isolatedNodes.length > 0 && (
           <div class="p-6 bg-muted/20 rounded-lg border border-muted mb-8">
             <h3 class="text-lg font-semibold text-accent mb-4">
-              Isolated Posts
+              Isolated Content
             </h3>
             <p class="text-sm text-muted-foreground mb-4">
-              These posts don't have any connections yet. Consider adding links to related content.
+              These items don't have any connections yet. Consider adding links to related content.
             </p>
             <div class="grid gap-2">
-              {isolatedPosts.map(post => (
+              {isolatedNodes.map(node => (
                 <a 
-                  href={`/posts/${post.slug}`}
+                  href={node.url}
                   class="p-3 bg-background rounded border border-muted hover:border-accent hover:bg-accent/5 transition-colors"
                 >
-                  <div class="font-medium text-foreground">{post.data.title}</div>
+                  <div class="font-medium text-foreground">{node.label}</div>
                   <div class="text-sm text-muted-foreground">
-                    {post.data.category && (
-                      <span class="capitalize">{post.data.category}</span>
+                    {node.category && (
+                      <span class="capitalize">{node.category}</span>
                     )}
+                    <span class="ml-2 text-xs bg-muted px-2 py-1 rounded">
+                      {node.type}
+                    </span>
                   </div>
                 </a>
               ))}

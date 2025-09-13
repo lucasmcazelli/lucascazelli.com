@@ -11,7 +11,7 @@ examples:
   - context: "Product Decision"
     description: "Quick visual scan (low load) vs. comparing specifications (high load)"
 formula: "CL(t) = Σ(System1(t) × 0.3 + System2(t) × 1.0)"
-visualization: "/assets/images/concepts/cognitive-load-curve.svg"
+visualization: ""
 weight: 4
 importance: 8
 cluster: "cognitive-science"

@@ -1,0 +1,648 @@
+---
+// OptimizationApproaches.astro - Interactive comparison of engineering approaches
+---
+
+<div class="optimization-comparison">
+  <header class="comparison-header">
+    <h2 class="comparison-title">Optimization Approaches: A Side-by-Side Comparison</h2>
+    <p class="comparison-subtitle">
+      This infographic highlights the fundamental differences between traditional, resource-focused optimization 
+      and the modern, human-centric behavioral approach.
+    </p>
+  </header>
+
+  <main class="comparison-main">
+    <div class="approaches-grid">
+      <!-- Traditional Engineering Card -->
+      <div class="approach-card traditional">
+        <h3 class="card-title">Traditional Engineering</h3>
+        <p class="card-description">
+          This approach is a linear process, focused on directly minimizing cost by manipulating 
+          physical and logistical variables within a system.
+        </p>
+        
+        <div class="flow-container">
+          <div class="flow-block input-block">Inputs</div>
+          <div class="inputs-grid">
+            <div class="input-item equipment">equipment</div>
+            <div class="input-item materials">materials</div>
+            <div class="input-item timeline">timeline</div>
+          </div>
+          
+          <div class="flow-connector">
+            <div class="flow-line"></div>
+            <div class="flow-arrow"></div>
+          </div>
+          
+          <div class="flow-block function-block">
+            <code>[optimize_workflow()]</code>
+          </div>
+          
+          <div class="flow-connector">
+            <div class="flow-line"></div>
+            <div class="flow-arrow"></div>
+          </div>
+          
+          <div class="flow-block function-block">
+            <code>[minimize_cost_function()]</code>
+          </div>
+          
+          <div class="flow-connector">
+            <div class="flow-line"></div>
+            <div class="flow-arrow"></div>
+          </div>
+          
+          <div class="flow-block result-block">
+            Optimized Result
+          </div>
+        </div>
+      </div>
+
+      <!-- Behavioral Engineering Card -->
+      <div class="approach-card behavioral">
+        <h3 class="card-title">Behavioral Engineering</h3>
+        <p class="card-description">
+          This method incorporates human psychology by adjusting the decision-making environment 
+          to influence behavior and improve outcomes before the final optimization.
+        </p>
+        
+        <div class="flow-container">
+          <div class="flow-block input-block">Inputs</div>
+          <div class="inputs-grid">
+            <div class="input-item context">context</div>
+            <div class="input-item cognitive">cognitive_load</div>
+            <div class="input-item social">social_dynamics</div>
+          </div>
+          
+          <!-- Multi-path flow -->
+          <div class="multi-path-container">
+            <div class="multi-path-line"></div>
+            <div class="multi-path-line"></div>
+            <div class="multi-path-line"></div>
+          </div>
+          
+          <div class="multi-functions">
+            <div class="flow-block function-block small">
+              <code>[design_nudges()]</code>
+            </div>
+            <div class="flow-block function-block small">
+              <code>[calculate_mental_effort()]</code>
+            </div>
+            <div class="flow-block function-block small">
+              <code>[leverage_team_dynamics()]</code>
+            </div>
+          </div>
+          
+          <div class="multi-path-container">
+            <div class="multi-path-line"></div>
+            <div class="multi-path-line"></div>
+            <div class="multi-path-line"></div>
+          </div>
+          
+          <div class="intermediate-outputs">
+            <div class="output-item choice">choice_architecture</div>
+            <div class="output-item budget">cognitive_budget</div>
+            <div class="output-item proof">social_proof</div>
+          </div>
+          
+          <div class="flow-connector">
+            <div class="flow-line"></div>
+            <div class="flow-arrow"></div>
+          </div>
+          
+          <div class="flow-block function-block">
+            <code>[optimize_decision_environment()]</code>
+          </div>
+          
+          <div class="flow-connector">
+            <div class="flow-line"></div>
+            <div class="flow-arrow"></div>
+          </div>
+          
+          <div class="flow-block function-block">
+            <code>[optimize_outcomes()]</code>
+          </div>
+          
+          <div class="flow-connector">
+            <div class="flow-line"></div>
+            <div class="flow-arrow"></div>
+          </div>
+          
+          <div class="flow-block result-block">
+            Optimized Result
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive Analysis Section -->
+    <section class="interactive-section">
+      <h3 class="interactive-title">
+        <span class="sparkle">✨</span> Interactive Scenario Analysis 
+        <span class="sparkle">✨</span>
+      </h3>
+      <p class="interactive-description">
+        Describe a project scenario below to see how each engineering approach would tackle it.
+      </p>
+      
+      <div class="interactive-controls">
+        <textarea 
+          id="scenarioInput" 
+          class="scenario-input"
+          placeholder="e.g., 'Creating a new app for collaborative brainstorming'"
+          rows="4"
+        ></textarea>
+        
+        <div class="analysis-buttons">
+          <button id="traditionalBtn" class="analysis-btn traditional-btn">
+            Analyze with Traditional Approach ✨
+          </button>
+          <button id="behavioralBtn" class="analysis-btn behavioral-btn">
+            Analyze with Behavioral Approach ✨
+          </button>
+        </div>
+        
+        <div id="resultOutput" class="result-output">
+          Your analysis will appear here...
+        </div>
+        
+        <div id="loadingIndicator" class="loading-indicator hidden">
+          <div class="loading-spinner"></div>
+          Thinking...
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// Simple interactive functionality
+document.addEventListener('DOMContentLoaded', () => {
+  const scenarioInput = document.getElementById('scenarioInput');
+  const traditionalBtn = document.getElementById('traditionalBtn');
+  const behavioralBtn = document.getElementById('behavioralBtn');
+  const resultOutput = document.getElementById('resultOutput');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+
+  function analyzeScenario(approach) {
+    const scenario = scenarioInput?.value?.trim();
+    if (!scenario) {
+      if (resultOutput) {
+        resultOutput.textContent = "Please describe a project scenario first.";
+      }
+      return;
+    }
+
+    // Show loading state
+    if (loadingIndicator) {
+      loadingIndicator.classList.remove('hidden');
+    }
+    if (resultOutput) {
+      resultOutput.textContent = '';
+    }
+
+    // Simple analysis based on approach
+    setTimeout(() => {
+      let analysis = '';
+      
+      if (approach === 'Traditional') {
+        analysis = `TRADITIONAL ENGINEERING ANALYSIS:
+
+Scenario: ${scenario}
+
+This approach focuses on measurable, physical variables and direct optimization of tangible resources.
+
+APPROACH BREAKDOWN:
+1. Resource Identification
+2. Linear Optimization  
+3. Implementation
+
+KEY METRICS:
+• Cost per unit
+• Resource utilization rate
+• Timeline adherence`;
+      } else {
+        analysis = `BEHAVIORAL ENGINEERING ANALYSIS:
+
+Scenario: ${scenario}
+
+This approach recognizes that human behavior is the primary variable and optimizes for psychological factors first.
+
+APPROACH BREAKDOWN:
+1. Human Context Analysis
+2. Choice Architecture Design
+3. Environmental Optimization
+
+KEY METRICS:
+• User engagement rates
+• Decision-making efficiency
+• Cognitive load reduction`;
+      }
+
+      if (resultOutput) {
+        resultOutput.textContent = analysis;
+      }
+      if (loadingIndicator) {
+        loadingIndicator.classList.add('hidden');
+      }
+    }, 1500);
+  }
+
+  if (traditionalBtn) {
+    traditionalBtn.addEventListener('click', () => analyzeScenario('Traditional'));
+  }
+  if (behavioralBtn) {
+    behavioralBtn.addEventListener('click', () => analyzeScenario('Behavioral'));
+  }
+});
+</script>
+
+<style>
+.optimization-comparison {
+  background: #003f5c;
+  color: white;
+  padding: 2rem;
+  border-radius: 16px;
+  margin: 2rem 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.comparison-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.comparison-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #ffc300, #ff5733);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.comparison-subtitle {
+  font-size: 1.125rem;
+  color: #cbd5e1;
+  max-width: 48rem;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.approaches-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.approach-card {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease;
+}
+
+.approach-card:hover {
+  transform: translateY(-2px);
+}
+
+.card-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #ffc300;
+}
+
+.card-description {
+  color: #cbd5e1;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.flow-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.flow-block {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.input-block {
+  background: #ff5733;
+  color: white;
+  font-size: 1.125rem;
+}
+
+.inputs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.input-item {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: white;
+  text-align: center;
+}
+
+.input-item.equipment { background: #da1a7a; }
+.input-item.materials { background: #1abc9c; }
+.input-item.timeline { background: #ffc300; color: #1a1a1a; }
+
+.input-item.context { background: #da1a7a; }
+.input-item.cognitive { background: #1abc9c; }
+.input-item.social { background: #ffc300; color: #1a1a1a; }
+
+.function-block {
+  background: #374151;
+  color: white;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+}
+
+.function-block.small {
+  font-size: 0.75rem;
+}
+
+.result-block {
+  background: #ffc300;
+  color: #1a1a1a;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.flow-connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.flow-line {
+  height: 1.5rem;
+  width: 2px;
+  background: #ff5733;
+}
+
+.flow-arrow {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #ff5733;
+}
+
+.multi-path-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 1rem;
+}
+
+.multi-path-line {
+  height: 1.5rem;
+  width: 2px;
+  background: #ff5733;
+  position: relative;
+}
+
+.multi-path-line::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: -6px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 10px solid #ff5733;
+}
+
+.multi-functions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.intermediate-outputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.output-item {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: white;
+  text-align: center;
+}
+
+.output-item.choice { background: #da1a7a; }
+.output-item.budget { background: #1abc9c; }
+.output-item.proof { background: #ffc300; color: #1a1a1a; }
+
+.interactive-section {
+  background: #1e293b;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.interactive-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+  color: #ffc300;
+}
+
+.interactive-description {
+  text-align: center;
+  color: #cbd5e1;
+  margin-bottom: 2rem;
+}
+
+.interactive-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.scenario-input {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #374151;
+  color: white;
+  border: none;
+  font-size: 1rem;
+  resize: vertical;
+  min-height: 120px;
+}
+
+.scenario-input::placeholder {
+  color: #9ca3af;
+}
+
+.scenario-input:focus {
+  outline: none;
+  ring: 2px solid #ffc300;
+}
+
+.analysis-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.analysis-btn {
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  transform: scale(1);
+}
+
+.traditional-btn {
+  background: #da1a7a;
+  color: white;
+}
+
+.traditional-btn:hover:not(:disabled) {
+  background: #b81665;
+  transform: translateY(-2px);
+}
+
+.behavioral-btn {
+  background: #1abc9c;
+  color: white;
+}
+
+.behavioral-btn:hover:not(:disabled) {
+  background: #159a7c;
+  transform: translateY(-2px);
+}
+
+.analysis-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.result-output {
+  background: #374151;
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  min-height: 200px;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #ffc300;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.loading-indicator.hidden {
+  display: none;
+}
+
+.loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #374151;
+  border-top: 2px solid #ffc300;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.sparkle {
+  display: inline-block;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.2) rotate(180deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .optimization-comparison {
+    padding: 1rem;
+  }
+  
+  .comparison-title {
+    font-size: 2rem;
+  }
+  
+  .approaches-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .analysis-buttons {
+    grid-template-columns: 1fr;
+  }
+  
+  .inputs-grid,
+  .multi-functions,
+  .intermediate-outputs {
+    grid-template-columns: 1fr;
+  }
+  
+  .multi-path-container {
+    justify-content: center;
+    gap: 2rem;
+  }
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .optimization-comparison {
+    background: #0f172a;
+  }
+  
+  .approach-card,
+  .interactive-section {
+    background: #1e293b;
+  }
+  
+  .scenario-input,
+  .result-output {
+    background: #374151;
+  }
+}
+</style>

@@ -1,5 +1,29 @@
 ---
 // ConceptModal.astro - Interactive modal for concept previews
+import { getCollection } from 'astro:content';
+
+// Get concept data at build time
+const concepts = await getCollection('concepts');
+const conceptData = new Map();
+
+concepts.forEach(concept => {
+  const conceptId = concept.id.replace('.md', '');
+  conceptData.set(conceptId, {
+    id: conceptId,
+    term: concept.data.term,
+    definition: concept.data.definition,
+    category: concept.data.category,
+    aliases: concept.data.aliases || [],
+    related: concept.data.related || [],
+    examples: concept.data.examples || [],
+    formula: concept.data.formula,
+    bridgeFrom: concept.data.bridgeFrom,
+    bridgeTo: concept.data.bridgeTo,
+    url: `/concepts/${conceptId}`
+  });
+});
+
+const conceptDataJson = JSON.stringify(Object.fromEntries(conceptData));
 ---
 
 <div id="concept-modal" class="concept-modal hidden">
@@ -14,14 +38,23 @@
       <div id="modal-details" class="modal-details"></div>
     </div>
     <div class="modal-footer">
-      <a id="modal-full-link" href="#" class="full-page-link">
-        Open full page →
-      </a>
+      <div class="modal-actions">
+        <a id="modal-full-link" href="#" class="full-page-link">
+          Open full page →
+        </a>
+        <button id="modal-new-tab-btn" class="new-tab-button" title="Open in new tab">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15,3 21,3 21,9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </div>
 
-<script>
+<script define:vars={{ conceptDataJson }}>
 // Concept modal functionality
 document.addEventListener('DOMContentLoaded', () => {
   const modal = document.getElementById('concept-modal');
@@ -31,33 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalDefinition = document.getElementById('modal-definition');
   const modalDetails = document.getElementById('modal-details');
   const modalLink = document.getElementById('modal-full-link');
+  const newTabBtn = document.getElementById('modal-new-tab-btn');
   
-  // Concept data cache
-  let conceptCache = new Map();
+  // Parse concept data from server
+  const conceptData = new Map(Object.entries(JSON.parse(conceptDataJson)));
   
-  // Load concept data
-  async function loadConceptData(conceptId) {
-    if (conceptCache.has(conceptId)) {
-      return conceptCache.get(conceptId);
-    }
-    
-    try {
-      const response = await fetch(`/api/concepts/${conceptId}`);
-      if (response.ok) {
-        const concept = await response.json();
-        conceptCache.set(conceptId, concept);
-        return concept;
-      }
-    } catch (error) {
-      console.warn(`Failed to load concept data for ${conceptId}:`, error);
-    }
-    
-    return null;
-  }
+  console.log('Loaded concept data:', conceptData);
   
   // Show modal with concept data
-  async function showConceptModal(conceptId) {
-    const concept = await loadConceptData(conceptId);
+  function showConceptModal(conceptId) {
+    const concept = conceptData.get(conceptId);
     
     if (!concept) {
       // Fallback: redirect to concept page
@@ -130,6 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
   closeBtn.addEventListener('click', closeModal);
   backdrop.addEventListener('click', closeModal);
   
+  // New tab button functionality
+  newTabBtn.addEventListener('click', () => {
+    const conceptUrl = modalLink.href;
+    if (conceptUrl && conceptUrl !== '#') {
+      window.open(conceptUrl, '_blank', 'noopener,noreferrer');
+    }
+  });
+  
   // Close on Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
@@ -138,21 +162,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   // Handle concept link clicks
-  document.addEventListener('click', async (e) => {
+  document.addEventListener('click', (e) => {
     const conceptLink = e.target.closest('[data-concept]');
     if (conceptLink && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       window.lastFocusedElement = e.target;
-      await showConceptModal(conceptLink.dataset.concept);
+      showConceptModal(conceptLink.dataset.concept);
     }
   });
   
   // Handle related concept clicks within modal
-  modalDetails.addEventListener('click', async (e) => {
+  modalDetails.addEventListener('click', (e) => {
     const relatedLink = e.target.closest('.related-link[data-concept]');
     if (relatedLink && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
-      await showConceptModal(relatedLink.dataset.concept);
+      showConceptModal(relatedLink.dataset.concept);
     }
   });
 });
@@ -371,6 +395,12 @@ document.addEventListener('DOMContentLoaded', () => {
   justify-content: flex-end;
 }
 
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .full-page-link {
   color: #4A6741;
   text-decoration: none;
@@ -388,6 +418,36 @@ document.addEventListener('DOMContentLoaded', () => {
   background: #4A6741;
   color: white;
   text-decoration: none;
+}
+
+.new-tab-button {
+  background: none;
+  border: 1px solid #4A6741;
+  border-radius: 6px;
+  color: #4A6741;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  width: 40px;
+  height: 40px;
+}
+
+.new-tab-button:hover {
+  background: #4A6741;
+  color: white;
+}
+
+.new-tab-button:focus {
+  outline: 2px solid #4A6741;
+  outline-offset: 2px;
+}
+
+.new-tab-button svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* Responsive adjustments */
@@ -503,6 +563,20 @@ document.addEventListener('DOMContentLoaded', () => {
   .full-page-link:hover {
     background: #7CB342;
     color: #1a1a1a;
+  }
+  
+  .new-tab-button {
+    border-color: #7CB342;
+    color: #7CB342;
+  }
+  
+  .new-tab-button:hover {
+    background: #7CB342;
+    color: #1a1a1a;
+  }
+  
+  .new-tab-button:focus {
+    outline-color: #7CB342;
   }
 }
 </style>

@@ -1,0 +1,48 @@
+---
+title: "Testing Concept Links"
+description: "A test post to verify that concept linking functionality works properly."
+pubDatetime: 2024-12-12T10:00:00Z
+modDatetime: 2024-12-12T10:00:00Z
+featured: false
+draft: true
+tags: ["test", "concepts"]
+category: "technical"
+importance: 3
+connections: []
+backlinks: []
+relatedPosts: []
+cluster: "testing"
+---
+
+import ConceptLink from '../../components/ConceptLink.astro';
+import Term from '../../components/Term.astro';
+
+# Testing Concept Links
+
+This is a test post to verify that the concept linking functionality works properly.
+
+## Testing Different Link Types
+
+### Using ConceptLink Component
+Here's a link to <ConceptLink concept="geometric-division">geometric division</ConceptLink> concept.
+
+### Using Term Component
+Here's a link to <Term id="cognitive-load-distribution">cognitive load distribution</Term> concept.
+
+### Testing with Custom Text
+Here's a link to <ConceptLink concept="geometric-division">spatial segmentation</ConceptLink> using custom display text.
+
+## What Should Work
+
+1. **Clickable Links**: All concept links should be clickable and navigate to the concept pages
+2. **Hover Effects**: Links should show hover effects indicating they're interactive
+3. **Modal Preview**: Clicking links should show a modal with concept preview (if modal is working)
+4. **Visual Styling**: Links should be visually distinct from regular text
+
+## Expected Behavior
+
+- Clicking any concept link should either:
+  - Open the concept page directly, OR
+  - Show a modal preview of the concept with an option to view the full page
+
+Let's see if this works!

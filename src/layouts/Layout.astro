@@ -4,6 +4,7 @@ import { PUBLIC_GOOGLE_SITE_VERIFICATION } from "astro:env/client";
 import { SITE } from "@/config";
 import "@/styles/global.css";
 import ConceptModal from "@/components/ConceptModal.astro";
+import AutoConceptHighlighter from "@/components/AutoConceptHighlighter.astro";
 
 export interface Props {
   title?: string;
@@ -136,6 +137,7 @@ const structuredData = {
   <body>
     <slot />
     <ConceptModal />
+    <AutoConceptHighlighter />
   </body>
 </html>
 
