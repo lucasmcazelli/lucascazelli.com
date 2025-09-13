@@ -1,0 +1,603 @@
+---
+import { getCollection } from 'astro:content';
+import ConceptPost from '@/layouts/ConceptPost.astro';
+import ConceptCard from '@/components/ConceptCard.astro';
+
+export async function getStaticPaths() {
+  const concepts = await getCollection('concepts');
+  return concepts.map(concept => ({
+    params: { slug: concept.id.replace('.md', '') },
+    props: { concept },
+  }));
+}
+
+const { concept } = Astro.props;
+const { Content } = await concept.render();
+
+// Get related concepts
+const allConcepts = await getCollection('concepts');
+const relatedConcepts = concept.data.related 
+  ? allConcepts.filter(c => concept.data.related?.includes(c.id))
+  : [];
+
+// Get bridging concepts
+const bridgingFrom = concept.data.bridgeFrom 
+  ? allConcepts.find(c => c.id === concept.data.bridgeFrom)
+  : null;
+const bridgingTo = concept.data.bridgeTo 
+  ? allConcepts.find(c => c.id === concept.data.bridgeTo)
+  : null;
+
+// Get concepts in same category
+const sameCategoryConcepts = allConcepts
+  .filter(c => c.data.category === concept.data.category && c.id !== concept.id)
+  .slice(0, 3);
+
+// Category colors
+const categoryColors = {
+  'engineering': '#3b82f6',
+  'cognitive-science': '#8b5cf6', 
+  'statistics': '#f59e0b',
+  'product': '#10b981',
+  'neuroai': '#ef4444'
+};
+const categoryColor = categoryColors[concept.data.category] || '#6b7280';
+
+// Structured data for SEO
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "DefinedTerm",
+  "name": concept.data.term,
+  "description": concept.data.definition,
+  "category": concept.data.category,
+  "alternateName": concept.data.aliases || [],
+  "url": Astro.url.href,
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Lucas Cazelli - Knowledge Base",
+    "url": Astro.site
+  }
+};
+---
+
+<ConceptPost 
+  title={`${concept.data.term} - Knowledge Base`}
+  description={concept.data.definition}
+  category={concept.data.category}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(structuredData)}></script>
+  <div class="concept-page">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+      <a href="/concepts">Knowledge Base</a>
+      <span class="breadcrumb-separator">→</span>
+      <span class="breadcrumb-current">{concept.data.term}</span>
+    </nav>
+
+    <!-- Concept Header -->
+    <header class="concept-header">
+      <div class="concept-meta">
+        <div class="concept-category" style={`background-color: ${categoryColor}`}>
+          {concept.data.category.replace('-', ' ')}
+        </div>
+        <div class="concept-importance">
+          <span class="importance-label">Importance:</span>
+          {Array.from({ length: 10 }, (_, i) => (
+            <span class={`importance-dot ${i < (concept.data.importance || 5) ? 'active' : ''}`}></span>
+          ))}
+        </div>
+      </div>
+      
+      <h1 class="concept-title">{concept.data.term}</h1>
+      
+      <p class="concept-definition">{concept.data.definition}</p>
+      
+      {concept.data.aliases && concept.data.aliases.length > 0 && (
+        <div class="concept-aliases">
+          <span class="aliases-label">Also known as:</span>
+          {concept.data.aliases.map(alias => (
+            <span class="alias-tag">{alias}</span>
+          ))}
+        </div>
+      )}
+      
+      {concept.data.formula && (
+        <div class="concept-formula">
+          <span class="formula-label">Formula:</span>
+          <code class="formula-code">{concept.data.formula}</code>
+        </div>
+      )}
+    </header>
+
+    <!-- Concept Content -->
+    <main class="concept-content">
+      <Content />
+    </main>
+
+    <!-- Concept Examples -->
+    {concept.data.examples && concept.data.examples.length > 0 && (
+      <section class="concept-examples">
+        <h2>Examples</h2>
+        <div class="examples-grid">
+          {concept.data.examples.map(example => (
+            <div class="example-card">
+              <h3 class="example-context">{example.context}</h3>
+              <p class="example-description">{example.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Concept Bridges -->
+    {(bridgingFrom || bridgingTo) && (
+      <section class="concept-bridges">
+        <h2>Concept Bridges</h2>
+        <div class="bridges-grid">
+          {bridgingFrom && (
+            <div class="bridge-card from">
+              <div class="bridge-label">Bridges from</div>
+              <ConceptCard concept={bridgingFrom} />
+            </div>
+          )}
+          {bridgingTo && (
+            <div class="bridge-card to">
+              <div class="bridge-label">Bridges to</div>
+              <ConceptCard concept={bridgingTo} />
+            </div>
+          )}
+        </div>
+      </section>
+    )}
+
+    <!-- Related Concepts -->
+    {relatedConcepts.length > 0 && (
+      <section class="related-concepts">
+        <h2>Related Concepts</h2>
+        <div class="related-grid">
+          {relatedConcepts.map(related => (
+            <ConceptCard concept={related} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Same Category Concepts -->
+    {sameCategoryConcepts.length > 0 && (
+      <section class="category-concepts">
+        <h2>More {concept.data.category.replace('-', ' ')} concepts</h2>
+        <div class="category-grid">
+          {sameCategoryConcepts.map(catConcept => (
+            <ConceptCard concept={catConcept} />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Navigation -->
+    <nav class="concept-navigation">
+      <div class="nav-section">
+        <h3>Explore More</h3>
+        <ul class="nav-links">
+          <li><a href="/concepts">All Concepts</a></li>
+          <li><a href="/concepts#category-{concept.data.category}">More {concept.data.category.replace('-', ' ')}</a></li>
+          <li><a href="/">Blog Posts</a></li>
+          <li><a href="/about">About</a></li>
+        </ul>
+      </div>
+      
+      <div class="nav-section">
+        <h3>Share This Concept</h3>
+        <div class="share-buttons">
+          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Learn about ${concept.data.term}: ${concept.data.definition}`)}&url=${encodeURIComponent(Astro.url.href)}`} 
+             target="_blank" rel="noopener noreferrer" class="share-button twitter">
+            Share on Twitter
+          </a>
+          <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(Astro.url.href)}`}
+             target="_blank" rel="noopener noreferrer" class="share-button linkedin">
+            Share on LinkedIn
+          </a>
+        </div>
+      </div>
+    </nav>
+  </div>
+</ConceptPost>
+
+<style>
+  .concept-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .breadcrumb {
+    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  .breadcrumb a {
+    color: #4A6741;
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .breadcrumb-separator {
+    margin: 0 0.5rem;
+  }
+
+  .breadcrumb-current {
+    font-weight: 500;
+  }
+
+  .concept-header {
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .concept-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+
+  .concept-category {
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .concept-importance {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .importance-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  .importance-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    transition: background-color 0.2s ease;
+  }
+
+  .importance-dot.active {
+    background: #4A6741;
+  }
+
+  .concept-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 1rem 0;
+    line-height: 1.2;
+  }
+
+  .concept-definition {
+    font-size: 1.3rem;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0 0 1.5rem 0;
+    font-weight: 400;
+  }
+
+  .concept-aliases {
+    margin: 1.5rem 0;
+  }
+
+  .aliases-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-right: 1rem;
+    font-weight: 500;
+  }
+
+  .alias-tag {
+    background: #f3f4f6;
+    color: #6b7280;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-right: 0.5rem;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+
+  .concept-formula {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #4A6741;
+  }
+
+  .formula-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .formula-code {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 1.1rem;
+    color: #4A6741;
+    background: white;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    display: inline-block;
+  }
+
+  .concept-content {
+    margin-bottom: 4rem;
+  }
+
+  .concept-content :global(h2) {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin: 3rem 0 1.5rem 0;
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.5rem;
+  }
+
+  .concept-content :global(h3) {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--foreground);
+    margin: 2rem 0 1rem 0;
+  }
+
+  .concept-content :global(p) {
+    line-height: 1.7;
+    margin: 1rem 0;
+    color: var(--foreground);
+  }
+
+  .concept-content :global(strong) {
+    color: var(--foreground);
+    font-weight: 600;
+  }
+
+  .concept-content :global(code) {
+    background: var(--muted);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.9em;
+    color: var(--foreground);
+  }
+
+  .concept-content :global(pre) {
+    background: var(--muted);
+    color: var(--foreground);
+    padding: 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border);
+  }
+
+  .concept-content :global(pre code) {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .concept-content :global(blockquote) {
+    border-left: 4px solid var(--accent);
+    background: var(--muted);
+    opacity: 0.5;
+    padding: 1rem 1.5rem;
+    margin: 1.5rem 0;
+    font-style: italic;
+    color: var(--foreground);
+  }
+
+  .concept-content :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+
+  .concept-content :global(th),
+  .concept-content :global(td) {
+    border: 1px solid #e5e7eb;
+    padding: 0.75rem;
+    text-align: left;
+  }
+
+  .concept-content :global(th) {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #1f2937;
+  }
+
+  .concept-examples,
+  .concept-bridges,
+  .related-concepts,
+  .category-concepts {
+    margin: 4rem 0;
+  }
+
+  .concept-examples h2,
+  .concept-bridges h2,
+  .related-concepts h2,
+  .category-concepts h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+  }
+
+  .examples-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .example-card {
+    background: #f0f7f0;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #4A6741;
+  }
+
+  .example-context {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4A6741;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .example-description {
+    color: #374151;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .bridges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .bridge-card {
+    position: relative;
+  }
+
+  .bridge-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .bridge-card.from .bridge-label {
+    color: #1e40af;
+  }
+
+  .bridge-card.to .bridge-label {
+    color: #166534;
+  }
+
+  .related-grid,
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .concept-navigation {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e5e7eb;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+  }
+
+  .nav-section h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+  }
+
+  .nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .nav-links li {
+    margin-bottom: 0.5rem;
+  }
+
+  .nav-links a {
+    color: #4A6741;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .nav-links a:hover {
+    color: #10b981;
+    text-decoration: underline;
+  }
+
+  .share-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .share-button {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .share-button.twitter {
+    background: #1da1f2;
+    color: white;
+  }
+
+  .share-button.linkedin {
+    background: #0077b5;
+    color: white;
+  }
+
+  .share-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 768px) {
+    .concept-title {
+      font-size: 2rem;
+    }
+
+    .concept-definition {
+      font-size: 1.1rem;
+    }
+
+    .concept-meta {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+
+    .bridges-grid,
+    .related-grid,
+    .category-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .concept-navigation {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

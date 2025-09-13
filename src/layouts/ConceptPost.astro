@@ -1,0 +1,76 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Header from "@/components/Header.astro";
+import SEOHead from "@/components/SEOHead.astro";
+import NewsletterSignup from "@/components/NewsletterSignup.astro";
+import TableOfContents from "@/components/TableOfContents.astro";
+import ShareButtons from "@/components/ShareButtons.astro";
+
+export interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+export interface Props {
+  title: string;
+  description: string;
+  ogImage?: string;
+  canonicalURL?: string;
+  headings?: Heading[];
+  category?: string;
+  type?: string;
+}
+
+const {
+  title,
+  description,
+  ogImage,
+  canonicalURL,
+  headings = [],
+  category,
+  type = "article",
+} = Astro.props as Props;
+---
+
+<Layout
+  {title}
+  {description}
+  {ogImage}
+  {canonicalURL}
+>
+  <fragment slot="head">
+    <SEOHead
+      {title}
+      {description}
+      {type}
+      {ogImage}
+      {canonicalURL}
+    />
+  </fragment>
+  <Header />
+  <main class="mx-auto w-full max-w-6xl px-4 pb-12">
+    <div class="mt-8">
+      {category && (
+        <div class="mb-4">
+          <span class="inline-block rounded-full bg-accent px-3 py-1 text-sm font-medium text-white">
+            {category.replace('-', ' ')}
+          </span>
+        </div>
+      )}
+      <div class="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_280px]">
+        <article class="app-prose max-w-none lg:max-w-4xl">
+          <slot />
+        </article>
+        <aside class="md:sticky md:top-20 md:h-min">
+          <TableOfContents headings={headings} />
+          <div class="mt-6">
+            <ShareButtons />
+          </div>
+          <div class="mt-8">
+            <NewsletterSignup />
+          </div>
+        </aside>
+      </div>
+  </main>
+</Layout>

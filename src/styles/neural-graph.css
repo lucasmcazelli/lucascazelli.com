@@ -1,0 +1,375 @@
+/* Neural Network Graph Styles */
+:root {
+  --neural-primary: #3B82F6;
+  --neural-secondary: #6366F1;
+  --neural-accent: #EC4899;
+  --neural-success: #10B981;
+  --neural-warning: #F59E0B;
+  --neural-muted: #94A3B8;
+  --neural-glow: rgba(59, 130, 246, 0.3);
+  --neural-pulse: rgba(236, 72, 153, 0.4);
+}
+
+/* Neural network connection animations */
+@keyframes neural-pulse {
+  0%, 100% {
+    stroke-opacity: 0.3;
+    stroke-width: 1px;
+  }
+  50% {
+    stroke-opacity: 0.8;
+    stroke-width: 3px;
+  }
+}
+
+@keyframes neural-flow {
+  0% {
+    stroke-dashoffset: 20;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes neural-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 5px var(--neural-glow));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px var(--neural-glow)) drop-shadow(0 0 25px var(--neural-glow));
+  }
+}
+
+@keyframes node-activation {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px transparent);
+  }
+  50% {
+    transform: scale(1.15);
+    filter: drop-shadow(0 0 15px var(--neural-pulse)) drop-shadow(0 0 25px var(--neural-pulse));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px transparent);
+  }
+}
+
+@keyframes synaptic-fire {
+  0% {
+    stroke: var(--neural-muted);
+    stroke-width: 1px;
+    opacity: 0.4;
+  }
+  25% {
+    stroke: var(--neural-primary);
+    stroke-width: 2px;
+    opacity: 0.8;
+  }
+  50% {
+    stroke: var(--neural-accent);
+    stroke-width: 3px;
+    opacity: 1;
+  }
+  75% {
+    stroke: var(--neural-primary);
+    stroke-width: 2px;
+    opacity: 0.8;
+  }
+  100% {
+    stroke: var(--neural-muted);
+    stroke-width: 1px;
+    opacity: 0.4;
+  }
+}
+
+/* Enhanced edge styles */
+.neural-graph .edge {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.neural-graph .edge.connections {
+  stroke: var(--neural-primary);
+  stroke-dasharray: none;
+  animation: neural-pulse 4s ease-in-out infinite;
+  animation-delay: calc(var(--edge-index, 0) * 0.2s);
+}
+
+.neural-graph .edge.bridges {
+  stroke: var(--neural-accent);
+  stroke-dasharray: 8 4;
+  animation: neural-flow 2s linear infinite, synaptic-fire 6s ease-in-out infinite;
+  animation-delay: calc(var(--edge-index, 0) * 0.3s);
+}
+
+.neural-graph .edge.related {
+  stroke: var(--neural-success);
+  stroke-dasharray: 4 2;
+  animation: neural-pulse 5s ease-in-out infinite;
+  animation-delay: calc(var(--edge-index, 0) * 0.15s);
+}
+
+.neural-graph .edge.tags {
+  stroke: var(--neural-muted);
+  stroke-dasharray: 2 2;
+  opacity: 0.6;
+  animation: neural-flow 8s linear infinite;
+}
+
+.neural-graph .edge.mentions {
+  stroke: var(--neural-warning);
+  stroke-dasharray: 6 3;
+  opacity: 0.5;
+  animation: neural-pulse 7s ease-in-out infinite;
+}
+
+.neural-graph .edge.active {
+  animation: synaptic-fire 1s ease-in-out;
+  stroke-width: 4px !important;
+  opacity: 1 !important;
+}
+
+/* Enhanced node styles */
+.neural-graph .node circle {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.1));
+}
+
+.neural-graph .node.post circle {
+  stroke: #ffffff;
+  stroke-width: 2px;
+}
+
+.neural-graph .node.concept circle {
+  stroke: #ffffff;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.3));
+}
+
+.neural-graph .node.tag circle {
+  stroke: #ffffff;
+  stroke-width: 1px;
+  opacity: 0.8;
+}
+
+.neural-graph .node:hover circle {
+  animation: node-activation 0.6s ease-in-out;
+  cursor: pointer;
+}
+
+.neural-graph .node.selected circle {
+  stroke: var(--neural-accent);
+  stroke-width: 4px;
+  animation: neural-glow 2s ease-in-out infinite;
+}
+
+.neural-graph .node.highlighted circle {
+  filter: drop-shadow(0 0 15px var(--neural-glow)) drop-shadow(0 0 25px var(--neural-glow));
+  transform: scale(1.1);
+}
+
+.neural-graph .node.dimmed {
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+/* Labels with neural styling */
+.neural-graph .label {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  user-select: none;
+}
+
+.neural-graph .node:hover .label {
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.neural-graph .label.tag {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.neural-graph .label.concept {
+  font-weight: 600;
+  text-shadow: 0 0 5px rgba(99, 102, 241, 0.4);
+}
+
+/* Particle effect overlay */
+.neural-graph::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+  animation: neural-background 20s ease-in-out infinite;
+}
+
+@keyframes neural-background {
+  0%, 100% {
+    background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 60%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+  }
+  33% {
+    background: radial-gradient(circle at 70% 30%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 30% 70%, rgba(236, 72, 153, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 60% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+  }
+  66% {
+    background: radial-gradient(circle at 40% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 60% 20%, rgba(236, 72, 153, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+  }
+}
+
+/* Connection strength indicators */
+.neural-graph .edge[data-strength="weak"] {
+  stroke-width: 1px;
+  opacity: 0.4;
+}
+
+.neural-graph .edge[data-strength="medium"] {
+  stroke-width: 2px;
+  opacity: 0.6;
+}
+
+.neural-graph .edge[data-strength="strong"] {
+  stroke-width: 3px;
+  opacity: 0.8;
+}
+
+.neural-graph .edge[data-strength="very-strong"] {
+  stroke-width: 4px;
+  opacity: 1;
+  animation: synaptic-fire 3s ease-in-out infinite;
+}
+
+/* Hover effects for connection paths */
+.neural-graph .connection-path {
+  stroke: var(--neural-accent);
+  stroke-width: 3px;
+  opacity: 0;
+  stroke-dasharray: 8 4;
+  animation: neural-flow 1s linear infinite;
+  transition: opacity 0.3s ease;
+}
+
+.neural-graph .connection-path.active {
+  opacity: 0.8;
+}
+
+/* Cluster visualization */
+.neural-graph .cluster-boundary {
+  fill: none;
+  stroke: var(--neural-muted);
+  stroke-width: 1px;
+  stroke-dasharray: 4 4;
+  opacity: 0.3;
+  animation: neural-flow 10s linear infinite;
+}
+
+.neural-graph .cluster-label {
+  font-size: 14px;
+  font-weight: 600;
+  fill: var(--neural-muted);
+  text-anchor: middle;
+  opacity: 0.7;
+}
+
+/* Force field visualization */
+.neural-graph .force-field {
+  fill: none;
+  stroke: var(--neural-primary);
+  stroke-width: 0.5px;
+  opacity: 0.1;
+  animation: neural-glow 8s ease-in-out infinite;
+}
+
+/* Interactive feedback */
+.neural-graph .node.dragging circle {
+  stroke: var(--neural-warning);
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 20px var(--neural-warning));
+}
+
+.neural-graph .edge.highlighted {
+  stroke-width: 4px !important;
+  opacity: 1 !important;
+  animation: synaptic-fire 0.8s ease-in-out;
+}
+
+/* Loading animation */
+@keyframes neural-loading {
+  0% {
+    transform: scale(0.8) rotate(0deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8) rotate(360deg);
+    opacity: 0.5;
+  }
+}
+
+.neural-graph.loading .node circle {
+  animation: neural-loading 2s ease-in-out infinite;
+  animation-delay: calc(var(--node-index, 0) * 0.1s);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .neural-graph .label {
+    font-size: 10px;
+  }
+  
+  .neural-graph .node circle {
+    stroke-width: 1px;
+  }
+  
+  .neural-graph .edge {
+    stroke-width: 1px !important;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .neural-graph .edge {
+    animation: none;
+    stroke-dasharray: none;
+  }
+  
+  .neural-graph .node circle {
+    animation: none;
+    filter: none;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .neural-graph .edge,
+  .neural-graph .node circle,
+  .neural-graph .label {
+    animation: none;
+    transition: none;
+  }
+  
+  .neural-graph::before {
+    animation: none;
+  }
+}

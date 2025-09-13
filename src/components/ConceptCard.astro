@@ -1,0 +1,264 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  concept: CollectionEntry<'concepts'>;
+}
+
+const { concept } = Astro.props;
+
+const conceptUrl = `/concepts/${concept.id.replace('.md', '')}`;
+const categoryColors = {
+  'engineering': '#3b82f6',
+  'cognitive-science': '#8b5cf6', 
+  'statistics': '#f59e0b',
+  'product': '#10b981',
+  'neuroai': '#ef4444'
+};
+const categoryColor = categoryColors[concept.data.category] || '#6b7280';
+---
+
+<div class="concept-card">
+  <div class="concept-header">
+    <div class="concept-category" style={`background-color: ${categoryColor}`}>
+      {concept.data.category.replace('-', ' ')}
+    </div>
+    <div class="concept-importance">
+      {Array.from({ length: 5 }, (_, i) => (
+        <span class={`importance-dot ${i < (concept.data.importance || 5) ? 'active' : ''}`}></span>
+      ))}
+    </div>
+  </div>
+  
+  <div class="concept-content">
+    <h3 class="concept-title">
+      <a href={conceptUrl}>{concept.data.term}</a>
+    </h3>
+    
+    <p class="concept-definition">{concept.data.definition}</p>
+    
+    {concept.data.examples && concept.data.examples.length > 0 && (
+      <div class="concept-example">
+        <strong>Example:</strong> {concept.data.examples[0].description}
+      </div>
+    )}
+    
+    {concept.data.formula && (
+      <div class="concept-formula">
+        <code>{concept.data.formula}</code>
+      </div>
+    )}
+  </div>
+  
+  <div class="concept-footer">
+    <div class="concept-aliases">
+      {concept.data.aliases && concept.data.aliases.slice(0, 2).map(alias => (
+        <span class="alias-tag">{alias}</span>
+      ))}
+      {concept.data.aliases && concept.data.aliases.length > 2 && (
+        <span class="more-aliases">+{concept.data.aliases.length - 2} more</span>
+      )}
+    </div>
+    
+    <div class="concept-connections">
+      {concept.data.bridgeFrom && (
+        <span class="bridge-indicator from">Bridge from: {concept.data.bridgeFrom}</span>
+      )}
+      {concept.data.bridgeTo && (
+        <span class="bridge-indicator to">Bridge to: {concept.data.bridgeTo}</span>
+      )}
+      {concept.data.related && concept.data.related.length > 0 && (
+        <span class="related-count">{concept.data.related.length} related</span>
+      )}
+    </div>
+  </div>
+</div>
+
+<style>
+  .concept-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .concept-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+
+  .concept-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .concept-category {
+    color: var(--background);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .concept-importance {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .importance-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background-color 0.2s ease;
+  }
+
+  .importance-dot.active {
+    background: var(--accent);
+  }
+
+  .concept-content {
+    flex: 1;
+    margin-bottom: 1rem;
+  }
+
+  .concept-title {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+
+  .concept-title a {
+    color: var(--foreground);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .concept-title a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-underline-offset: 4px;
+  }
+
+  .concept-definition {
+    color: var(--foreground);
+    opacity: 0.8;
+    line-height: 1.5;
+    margin: 0 0 1rem 0;
+    font-size: 0.95rem;
+  }
+
+  .concept-example {
+    background: var(--muted);
+    opacity: 0.5;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin: 0.75rem 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    border-left: 4px solid var(--accent);
+  }
+
+  .concept-example strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .concept-formula {
+    background: var(--muted);
+    opacity: 0.3;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    margin: 0.75rem 0;
+    border-left: 4px solid var(--accent);
+  }
+
+  .concept-formula code {
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.85rem;
+    color: var(--foreground);
+    background: var(--muted);
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .concept-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+
+  .concept-aliases {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .alias-tag {
+    background: var(--muted);
+    color: var(--foreground);
+    opacity: 0.7;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .more-aliases {
+    color: var(--foreground);
+    opacity: 0.5;
+    font-size: 0.75rem;
+    font-style: italic;
+  }
+
+  .concept-connections {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .bridge-indicator {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .bridge-indicator.from {
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
+  }
+
+  .bridge-indicator.to {
+    background: rgba(16, 185, 129, 0.1);
+    color: #166534;
+  }
+
+  .related-count {
+    color: var(--foreground);
+    opacity: 0.6;
+    font-size: 0.8rem;
+    font-style: italic;
+  }
+
+  /* Dark theme adjustments */
+  html[data-theme="dark"] .bridge-indicator.from {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd;
+  }
+
+  html[data-theme="dark"] .bridge-indicator.to {
+    background: rgba(16, 185, 129, 0.2);
+    color: #86efac;
+  }
+</style>

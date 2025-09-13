@@ -2,19 +2,15 @@
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
-// import UnifiedKnowledgeGraph from "@/components/UnifiedKnowledgeGraph.astro";
-// import { buildUnifiedGraph, getGraphStats, getBridgeConnections } from "@/utils/unifiedGraph";
+import ObsidianGraph from "@/components/ObsidianGraph.astro";
+import { buildUnifiedGraph, getGraphStats } from "@/utils/unifiedGraph";
 
-// Build the unified graph with both posts and concepts
-// const graph = await buildUnifiedGraph();
-// const stats = await getGraphStats();
+// Build the unified graph with posts, concepts, and tags
+const graph = await buildUnifiedGraph();
+const stats = await getGraphStats();
 
-// Temporary placeholder data
-const stats = { totalNodes: 0, totalEdges: 0, posts: 0, concepts: 0, bridges: 0, categories: {} };
-const mostConnected = [];
-const isolatedNodes = [];
-const categories = [];
-const totalPosts = 0;
+// Extract categories for the category distribution
+const categories = Object.keys(stats.categories);
 ---
 
 <Layout title="Knowledge Graph" description="Interactive visualization of blog post connections and relationships">
@@ -32,7 +28,7 @@ const totalPosts = 0;
           </p>
           
           <!-- Graph Statistics -->
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+          <div class="grid grid-cols-2 md:grid-cols-6 gap-4 mb-8">
             <div class="p-4 bg-muted/20 rounded-lg border border-muted">
               <div class="text-2xl font-bold text-accent">{stats.totalNodes}</div>
               <div class="text-sm text-muted-foreground">Total Nodes</div>
@@ -44,6 +40,10 @@ const totalPosts = 0;
             <div class="p-4 bg-muted/20 rounded-lg border border-muted">
               <div class="text-2xl font-bold text-accent">{stats.concepts}</div>
               <div class="text-sm text-muted-foreground">Concepts</div>
+            </div>
+            <div class="p-4 bg-muted/20 rounded-lg border border-muted">
+              <div class="text-2xl font-bold text-accent">{stats.tags}</div>
+              <div class="text-sm text-muted-foreground">Tags</div>
             </div>
             <div class="p-4 bg-muted/20 rounded-lg border border-muted">
               <div class="text-2xl font-bold text-accent">{stats.bridges}</div>
@@ -58,9 +58,14 @@ const totalPosts = 0;
 
         <!-- Interactive Graph -->
         <div class="mb-8">
-          <div class="p-8 bg-muted/20 rounded-lg border border-muted text-center">
-            <h3 class="text-lg font-semibold text-accent mb-4">Knowledge Graph</h3>
-            <p class="text-muted-foreground">Graph visualization coming soon!</p>
+          <div class="bg-muted/20 rounded-lg border border-muted overflow-hidden" style="height: 800px;">
+            <ObsidianGraph 
+              graph={graph} 
+              width={1200} 
+              height={800}
+              showTags={false}
+              enablePhysics={true}
+            />
           </div>
         </div>
 
@@ -69,10 +74,10 @@ const totalPosts = 0;
           <!-- Most Connected Posts -->
           <div class="p-6 bg-muted/20 rounded-lg border border-muted">
             <h3 class="text-lg font-semibold text-accent mb-4">
-              Most Connected Posts
+              Most Connected Content
             </h3>
             <div class="space-y-3">
-              {mostConnected.map((node) => (
+              {stats.mostConnected.map((node) => (
                 <div class="flex items-center justify-between p-3 bg-background rounded border border-muted">
                   <div class="flex-1">
                     <a 
@@ -105,8 +110,9 @@ const totalPosts = 0;
             </h3>
             <div class="space-y-3">
               {categories.map(category => {
-                const count = graph.nodes.filter(n => n.category === category).length;
-                const percentage = totalPosts > 0 ? (count / totalPosts) * 100 : 0;
+                const count = stats.categories[category];
+                const totalContent = stats.posts + stats.concepts;
+                const percentage = totalContent > 0 ? (count / totalContent) * 100 : 0;
                 return (
                   <div class="flex items-center justify-between">
                     <span class="capitalize text-foreground">{category}</span>
@@ -127,7 +133,7 @@ const totalPosts = 0;
         </div>
 
         <!-- Isolated Nodes (if any) -->
-        {isolatedNodes.length > 0 && (
+        {stats.isolatedNodes.length > 0 && (
           <div class="p-6 bg-muted/20 rounded-lg border border-muted mb-8">
             <h3 class="text-lg font-semibold text-accent mb-4">
               Isolated Content
@@ -136,7 +142,7 @@ const totalPosts = 0;
               These items don't have any connections yet. Consider adding links to related content.
             </p>
             <div class="grid gap-2">
-              {isolatedNodes.map(node => (
+              {stats.isolatedNodes.map(node => (
                 <a 
                   href={node.url}
                   class="p-3 bg-background rounded border border-muted hover:border-accent hover:bg-accent/5 transition-colors"
@@ -161,24 +167,58 @@ const totalPosts = 0;
           <h3 class="text-lg font-semibold text-accent mb-4">
             How to Use the Knowledge Graph
           </h3>
-          <div class="grid md:grid-cols-2 gap-6 text-sm">
+          <div class="grid md:grid-cols-3 gap-6 text-sm">
             <div>
               <h4 class="font-medium text-foreground mb-2">Navigation</h4>
               <ul class="space-y-1 text-muted-foreground">
                 <li>• Click and drag nodes to move them around</li>
-                <li>• Click on a node to navigate to that post</li>
+                <li>• Click on a node to see its details and connections</li>
                 <li>• Use mouse wheel to zoom in/out</li>
                 <li>• Drag the background to pan around</li>
+                <li>• Hover over nodes for quick information</li>
               </ul>
             </div>
             <div>
-              <h4 class="font-medium text-foreground mb-2">Filtering</h4>
+              <h4 class="font-medium text-foreground mb-2">Filtering & Controls</h4>
               <ul class="space-y-1 text-muted-foreground">
-                <li>• Use category filter to show specific topics</li>
-                <li>• Search by post title or tags</li>
-                <li>• Toggle cluster view to group by category</li>
-                <li>• Reset layout to reorganize the graph</li>
+                <li>• Filter by node type (posts, concepts, tags)</li>
+                <li>• Filter by category for focused exploration</li>
+                <li>• Search nodes by title, tags, or content</li>
+                <li>• Toggle physics simulation on/off</li>
+                <li>• Adjust connection strength and repulsion</li>
               </ul>
+            </div>
+            <div>
+              <h4 class="font-medium text-foreground mb-2">Understanding Connections</h4>
+              <ul class="space-y-1 text-muted-foreground">
+                <li>• <span class="text-blue-500">Blue lines:</span> Manual connections</li>
+                <li>• <span class="text-pink-500">Pink lines:</span> Bridge concepts</li>
+                <li>• <span class="text-green-500">Green lines:</span> Related concepts</li>
+                <li>• <span class="text-gray-400">Gray lines:</span> Shared tags</li>
+                <li>• Thicker lines = stronger connections</li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="mt-6 p-4 bg-background/50 rounded border border-muted">
+            <h4 class="font-medium text-foreground mb-2">Graph Statistics</h4>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span class="text-muted-foreground">Average connections per node:</span>
+                <span class="ml-2 font-medium text-accent">{stats.avgConnectionsPerNode.toFixed(1)}</span>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Most connected:</span>
+                <span class="ml-2 font-medium text-accent">{stats.mostConnected[0]?.connectionCount || 0} links</span>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Bridge connections:</span>
+                <span class="ml-2 font-medium text-accent">{stats.bridges}</span>
+              </div>
+              <div>
+                <span class="text-muted-foreground">Isolated nodes:</span>
+                <span class="ml-2 font-medium text-accent">{stats.isolatedNodes.length}</span>
+              </div>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { getCollection } from 'astro:content';
 export interface GraphNode {
   id: string;
   label: string;
-  type: 'post' | 'concept';
+  type: 'post' | 'concept' | 'tag';
   category?: string;
   weight: number;
   url: string;
@@ -11,13 +11,17 @@ export interface GraphNode {
   definition?: string;
   importance?: number;
   cluster?: string;
+  tags?: string[];
+  connectionCount?: number;
+  centrality?: number;
 }
 
 export interface GraphEdge {
   source: string;
   target: string;
-  type: 'references' | 'related' | 'bridges' | 'mentions' | 'connections';
+  type: 'references' | 'related' | 'bridges' | 'mentions' | 'connections' | 'tags' | 'backlinks';
   weight: number;
+  strength: number; // Calculated strength based on multiple factors
 }
 
 export interface UnifiedGraph {
@@ -25,12 +29,43 @@ export interface UnifiedGraph {
   edges: GraphEdge[];
 }
 
+// Simple in-memory cache for development
+let graphCache: UnifiedGraph | null = null;
+let cacheTimestamp = 0;
+const CACHE_TTL = 1000 * 60 * 5; // 5 minutes in development
+
 export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
+  // Use cache in production or if cache is still valid
+  if (import.meta.env.PROD && graphCache && Date.now() - cacheTimestamp < CACHE_TTL) {
+    return graphCache;
+  }
+  
   const posts = await getCollection('blog', ({ data }) => !data.draft);
   const concepts = await getCollection('concepts');
   
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
+  const tagNodes = new Map<string, GraphNode>();
+  
+  // Collect all unique tags
+  const allTags = new Set<string>();
+  posts.forEach(post => post.data.tags.forEach(tag => allTags.add(tag)));
+  
+  // Create tag nodes
+  allTags.forEach(tag => {
+    const tagNode: GraphNode = {
+      id: `tag-${tag}`,
+      label: `#${tag}`,
+      type: 'tag',
+      category: 'tag',
+      weight: 0.5,
+      url: `/tags/${tag}`,
+      importance: 3,
+      connectionCount: 0
+    };
+    tagNodes.set(tag, tagNode);
+    nodes.push(tagNode);
+  });
   
   // Add blog posts as nodes
   posts.forEach(post => {
@@ -44,16 +79,49 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
       url: `/posts/${postSlug}`,
       date: post.data.pubDatetime,
       importance: post.data.importance,
-      cluster: post.data.cluster
+      cluster: post.data.cluster,
+      tags: post.data.tags,
+      connectionCount: 0
     });
     
-    // Add post-to-post connections
-    post.data.connections?.forEach(targetId => {
+    // Add post-to-tag connections
+    post.data.tags.forEach(tag => {
       edges.push({
         source: `post-${postSlug}`,
-        target: `post-${targetId}`,
+        target: `tag-${tag}`,
+        type: 'tags',
+        weight: 0.5,
+        strength: 0.5
+      });
+    });
+    
+    // Add post-to-post connections (manual) and post-to-concept connections
+    post.data.connections?.forEach(targetId => {
+      // Check if this is a concept or post connection
+      const isConceptConnection = concepts.some(c => c.slug === targetId);
+      const targetNodeId = isConceptConnection ? `concept-${targetId}` : `post-${targetId}`;
+      
+      edges.push({
+        source: `post-${postSlug}`,
+        target: targetNodeId,
         type: 'connections',
-        weight: 1
+        weight: 1,
+        strength: 1.5
+      });
+    });
+    
+    // Add backlink connections
+    post.data.backlinks?.forEach(sourceId => {
+      // Check if this is a concept or post backlink
+      const isConceptBacklink = concepts.some(c => c.slug === sourceId);
+      const sourceNodeId = isConceptBacklink ? `concept-${sourceId}` : `post-${sourceId}`;
+      
+      edges.push({
+        source: sourceNodeId,
+        target: `post-${postSlug}`,
+        type: 'backlinks',
+        weight: 0.8,
+        strength: 1.2
       });
     });
   });
@@ -69,7 +137,8 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
       url: `/concepts/${concept.slug}`,
       definition: concept.data.definition,
       importance: concept.data.importance,
-      cluster: concept.data.cluster
+      cluster: concept.data.cluster,
+      connectionCount: 0
     });
     
     // Add concept-to-concept connections
@@ -78,7 +147,8 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
         source: `concept-${concept.slug}`,
         target: `concept-${relatedId}`,
         type: 'related',
-        weight: 0.5
+        weight: 0.5,
+        strength: 0.7
       });
     });
     
@@ -88,7 +158,8 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
         source: `concept-${concept.slug}`,
         target: `concept-${concept.data.bridgeTo}`,
         type: 'bridges',
-        weight: 2
+        weight: 2,
+        strength: 2.5
       });
     }
     
@@ -98,7 +169,8 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
         source: `concept-${concept.data.bridgeFrom}`,
         target: `concept-${concept.slug}`,
         type: 'bridges',
-        weight: 2
+        weight: 2,
+        strength: 2.5
       });
     }
   });
@@ -121,7 +193,8 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
             source: `post-${postSlug}`,
             target: `concept-${concept.slug}`,
             type: 'mentions',
-            weight: 0.3
+            weight: 0.3,
+            strength: 0.4
           });
         }
       });
@@ -131,16 +204,85 @@ export async function buildUnifiedGraph(): Promise<UnifiedGraph> {
   // Add concept-to-post connections (concepts introduced in posts)
   concepts.forEach(concept => {
     if (concept.data.firstIntroduced) {
-      edges.push({
-        source: `concept-${concept.slug}`,
-        target: `post-${concept.data.firstIntroduced}`,
-        type: 'references',
-        weight: 0.8
-      });
+      // Check if the referenced post actually exists
+      const postExists = posts.some(p => p.id === concept.data.firstIntroduced);
+      if (postExists) {
+        edges.push({
+          source: `concept-${concept.slug}`,
+          target: `post-${concept.data.firstIntroduced}`,
+          type: 'references',
+          weight: 0.8,
+          strength: 1.0
+        });
+      }
     }
   });
   
-  return { nodes, edges };
+  // Add tag-based connections between posts (shared tags create weak connections)
+  posts.forEach(post => {
+    const postSlug = post.id;
+    posts.forEach(otherPost => {
+      if (post.id === otherPost.id) return;
+      
+      const sharedTags = post.data.tags.filter(tag => 
+        otherPost.data.tags.includes(tag)
+      );
+      
+      if (sharedTags.length > 0) {
+        const strength = Math.min(sharedTags.length * 0.2, 0.8);
+        edges.push({
+          source: `post-${postSlug}`,
+          target: `post-${otherPost.id}`,
+          type: 'tags',
+          weight: strength,
+          strength: strength
+        });
+      }
+    });
+  });
+  
+  // Validate edges - remove edges that reference non-existent nodes
+  const nodeIds = new Set(nodes.map(n => n.id));
+  const validEdges = edges.filter(edge => {
+    const sourceExists = nodeIds.has(edge.source);
+    const targetExists = nodeIds.has(edge.target);
+    
+    if (!sourceExists) {
+      console.warn(`Edge references non-existent source node: ${edge.source}`);
+    }
+    if (!targetExists) {
+      console.warn(`Edge references non-existent target node: ${edge.target}`);
+    }
+    
+    return sourceExists && targetExists;
+  });
+  
+  // Calculate connection counts and centrality
+  const connectionCounts = new Map<string, number>();
+  validEdges.forEach(edge => {
+    connectionCounts.set(edge.source, (connectionCounts.get(edge.source) || 0) + 1);
+    connectionCounts.set(edge.target, (connectionCounts.get(edge.target) || 0) + 1);
+  });
+  
+  // Update nodes with connection counts
+  nodes.forEach(node => {
+    node.connectionCount = connectionCounts.get(node.id) || 0;
+    // Calculate centrality based on connection count and type
+    node.centrality = node.connectionCount * (node.type === 'tag' ? 0.5 : 1.0);
+  });
+  
+  console.log(`Graph built: ${nodes.length} nodes, ${validEdges.length} edges`);
+  console.log(`Node types: ${nodes.filter(n => n.type === 'post').length} posts, ${nodes.filter(n => n.type === 'concept').length} concepts, ${nodes.filter(n => n.type === 'tag').length} tags`);
+  
+  const graph = { nodes, edges: validEdges };
+  
+  // Cache the result
+  if (import.meta.env.PROD) {
+    graphCache = graph;
+    cacheTimestamp = Date.now();
+  }
+  
+  return graph;
 }
 
 // Helper function to get graph statistics
@@ -149,29 +291,52 @@ export async function getGraphStats(): Promise<{
   totalEdges: number;
   posts: number;
   concepts: number;
+  tags: number;
   bridges: number;
   categories: Record<string, number>;
+  mostConnected: GraphNode[];
+  isolatedNodes: GraphNode[];
+  avgConnectionsPerNode: number;
 }> {
   const graph = await buildUnifiedGraph();
   
   const posts = graph.nodes.filter(n => n.type === 'post').length;
   const concepts = graph.nodes.filter(n => n.type === 'concept').length;
+  const tags = graph.nodes.filter(n => n.type === 'tag').length;
   const bridges = graph.edges.filter(e => e.type === 'bridges').length;
   
   const categories = graph.nodes.reduce((acc, node) => {
-    if (node.category) {
+    if (node.category && node.category !== 'tag') {
       acc[node.category] = (acc[node.category] || 0) + 1;
     }
     return acc;
   }, {} as Record<string, number>);
+  
+  // Find most connected nodes (excluding tags)
+  const mostConnected = graph.nodes
+    .filter(n => n.type !== 'tag')
+    .sort((a, b) => (b.connectionCount || 0) - (a.connectionCount || 0))
+    .slice(0, 5);
+    
+  // Find isolated nodes (no connections)
+  const isolatedNodes = graph.nodes
+    .filter(n => (n.connectionCount || 0) === 0);
+  
+  const avgConnectionsPerNode = graph.nodes.length > 0 
+    ? graph.edges.length * 2 / graph.nodes.length 
+    : 0;
   
   return {
     totalNodes: graph.nodes.length,
     totalEdges: graph.edges.length,
     posts,
     concepts,
+    tags,
     bridges,
-    categories
+    categories,
+    mostConnected,
+    isolatedNodes,
+    avgConnectionsPerNode
   };
 }
 

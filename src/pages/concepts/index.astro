@@ -1,478 +1,566 @@
 ---
 import { getCollection } from 'astro:content';
-import Layout from '../../layouts/Layout.astro';
-import Header from '../../components/Header.astro';
-import Footer from '../../components/Footer.astro';
+import Layout from '@/layouts/Layout.astro';
+import Header from '@/components/Header.astro';
+import ConceptCard from '@/components/ConceptCard.astro';
+import type { CollectionEntry } from 'astro:content';
 
 const concepts = await getCollection('concepts');
-
-// Group by category
-const grouped = concepts.reduce((acc, concept) => {
-  const cat = concept.data.category;
-  if (!acc[cat]) acc[cat] = [];
-  acc[cat].push(concept);
+const conceptsByCategory = concepts.reduce((acc: Record<string, CollectionEntry<'concepts'>[]>, concept) => {
+  const category = concept.data.category;
+  if (!acc[category]) acc[category] = [];
+  acc[category].push(concept);
   return acc;
-}, {} as Record<string, typeof concepts>);
+}, {});
 
-// Sort each group alphabetically
-Object.keys(grouped).forEach(cat => {
-  grouped[cat].sort((a, b) => a.data.term.localeCompare(b.data.term));
-});
-
-// Category display names
-const categoryNames: Record<string, string> = {
-  'engineering': 'Engineering',
-  'cognitive-science': 'Cognitive Science',
-  'statistics': 'Statistics',
-  'product': 'Product Management',
-  'neuroai': 'NeuroAI & Machine Learning'
+// Category display names and descriptions
+const categoryInfo = {
+  'engineering': {
+    name: 'Engineering Fundamentals',
+    description: 'Core concepts from structural engineering, systems thinking, and computational methods'
+  },
+  'cognitive-science': {
+    name: 'Cognitive Science',
+    description: 'Understanding how the human mind processes information and makes decisions'
+  },
+  'statistics': {
+    name: 'Statistics & Analytics',
+    description: 'Statistical methods, experimental design, and data analysis principles'
+  },
+  'product': {
+    name: 'Product Management',
+    description: 'User experience, attention modeling, and behavioral optimization'
+  },
+  'neuroai': {
+    name: 'Neuroscience & AI',
+    description: 'Intersection of neural science, artificial intelligence, and human behavior'
+  }
 };
+
+// Get all concepts for the knowledge graph
+const allConcepts = concepts.map(concept => ({
+  id: concept.id,
+  term: concept.data.term,
+  category: concept.data.category,
+  weight: concept.data.weight || 1,
+  importance: concept.data.importance || 5,
+  cluster: concept.data.cluster || 'general',
+  related: concept.data.related || [],
+  bridgeFrom: concept.data.bridgeFrom,
+  bridgeTo: concept.data.bridgeTo
+}));
 ---
 
-<Layout title="Knowledge Base | Lucas Cazelli">
+<Layout title="Knowledge Base - Concepts & Terms" description="Explore interconnected concepts bridging engineering, cognitive science, and product management">
   <Header />
-  
-  <main class="concepts-page">
-    <header class="page-header">
+  <div class="concepts-index">
+
+    <header class="concepts-header">
       <h1>Knowledge Base</h1>
-      <p class="subtitle">
-        Explore the concepts that bridge engineering and product thinking. 
-        Each term connects to related ideas, forming a web of knowledge.
+      <p class="concepts-subtitle">
+        Interconnected concepts that bridge engineering precision with human-centered design. 
+        Each concept links to related ideas, creating a web of knowledge that spans from 
+        structural analysis to cognitive science to product optimization.
       </p>
-      <nav class="concept-nav">
-        <a href="/graph" class="graph-link">
-          <span class="icon">🕸️</span>
-          View Knowledge Graph
-        </a>
-        <a href="/posts" class="posts-link">
-          <span class="icon">📝</span>
-          Browse Blog Posts
-        </a>
-      </nav>
+      
+      <div class="concepts-stats">
+        <div class="stat">
+          <span class="stat-number">{concepts.length}</span>
+          <span class="stat-label">Concepts</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">{Object.keys(conceptsByCategory).length}</span>
+          <span class="stat-label">Categories</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">{concepts.filter(c => c.data.bridgeFrom || c.data.bridgeTo).length}</span>
+          <span class="stat-label">Bridges</span>
+        </div>
+      </div>
     </header>
-    
-    <div class="concepts-grid">
-      {Object.entries(grouped).map(([category, items]) => (
-        <section class="category-section">
-          <h2 class="category-title">
-            <span class="category-icon">
-              {category === 'engineering' && '🔧'}
-              {category === 'cognitive-science' && '🧠'}
-              {category === 'statistics' && '📊'}
-              {category === 'product' && '🚀'}
-              {category === 'neuroai' && '🤖'}
-            </span>
-            {categoryNames[category]}
-            <span class="concept-count">({items.length})</span>
-          </h2>
-          <div class="concept-cards">
-            {items.map(concept => (
-              <article class="concept-card">
-                <h3>
-                  <a href={`/concepts/${concept.slug}`}>{concept.data.term}</a>
-                </h3>
-                <p class="concept-definition">{concept.data.definition}</p>
-                
-                {concept.data.bridgeTo && (
-                  <div class="bridge-indicator">
-                    <span class="bridge-label">Bridges to:</span>
-                    <a href={`/concepts/${concept.data.bridgeTo}`} class="bridge-link">
-                      {concept.data.bridgeTo.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </a>
-                  </div>
-                )}
-                
-                <div class="concept-meta">
-                  {concept.data.related && concept.data.related.length > 0 && (
-                    <span class="related-count">
-                      <span class="icon">🔗</span>
-                      {concept.data.related.length} related
-                    </span>
-                  )}
-                  {concept.data.examples && concept.data.examples.length > 0 && (
-                    <span class="examples-count">
-                      <span class="icon">💡</span>
-                      {concept.data.examples.length} examples
-                    </span>
-                  )}
-                  <span class="importance-indicator" data-importance={concept.data.importance}>
-                    <span class="icon">⭐</span>
-                    {concept.data.importance}/10
-                  </span>
-                </div>
-              </article>
+
+    <!-- Knowledge Graph Visualization -->
+    <section class="knowledge-graph-section">
+      <h2>Concept Network</h2>
+      <p>Explore how concepts connect across disciplines. Each node represents a concept, with connections showing relationships and bridges between fields.</p>
+      
+      <div id="knowledge-graph" class="knowledge-graph-container">
+        <!-- D3.js visualization will be rendered here -->
+      </div>
+      
+      <div class="graph-legend">
+        <div class="legend-item">
+          <div class="legend-color engineering"></div>
+          <span>Engineering</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color cognitive-science"></div>
+          <span>Cognitive Science</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color statistics"></div>
+          <span>Statistics</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color product"></div>
+          <span>Product Management</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color neuroai"></div>
+          <span>Neuroscience & AI</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Concepts by Category -->
+    <section class="concepts-categories">
+      {Object.entries(conceptsByCategory).map(([category, categoryConcepts]) => (
+        <div class="concept-category">
+          <header class="category-header">
+            <h2>{categoryInfo[category as keyof typeof categoryInfo]?.name || category}</h2>
+            <p class="category-description">
+              {categoryInfo[category as keyof typeof categoryInfo]?.description || ''}
+            </p>
+          </header>
+          
+          <div class="concepts-grid">
+            {categoryConcepts.map(concept => (
+              <ConceptCard concept={concept} />
             ))}
           </div>
-        </section>
+        </div>
       ))}
-    </div>
-    
-    <footer class="page-footer">
-      <p>
-        This knowledge base grows with each new post and concept. 
-        <a href="/posts" class="footer-link">Read the latest posts</a> to discover new connections.
-      </p>
-    </footer>
-  </main>
-  
-  <Footer />
+    </section>
+
+    <!-- Featured Bridges -->
+    <section class="featured-bridges">
+      <h2>Featured Concept Bridges</h2>
+      <p>Key connections between engineering principles and product management insights.</p>
+      
+      <div class="bridges-grid">
+        <div class="bridge-card">
+          <div class="bridge-from">Geometric Division</div>
+          <div class="bridge-arrow">→</div>
+          <div class="bridge-to">Temporal Segmentation</div>
+          <p class="bridge-description">
+            Engineering's spatial division methods applied to time-based content analysis
+          </p>
+        </div>
+        
+        <div class="bridge-card">
+          <div class="bridge-from">Stress Distribution</div>
+          <div class="bridge-arrow">→</div>
+          <div class="bridge-to">Cognitive Load Distribution</div>
+          <p class="bridge-description">
+            How forces spread through materials parallels mental effort allocation
+          </p>
+        </div>
+        
+        <div class="bridge-card">
+          <div class="bridge-from">Statistical Significance</div>
+          <div class="bridge-arrow">→</div>
+          <div class="bridge-to">Behavioral Significance</div>
+          <p class="bridge-description">
+            Moving beyond p-values to understand what actually matters to users
+          </p>
+        </div>
+        
+        <div class="bridge-card">
+          <div class="bridge-from">System 1 vs System 2</div>
+          <div class="bridge-arrow">→</div>
+          <div class="bridge-to">Product Decision Making</div>
+          <p class="bridge-description">
+            Cognitive science principles applied to user experience and business decisions
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- How to Use -->
+    <section class="usage-guide">
+      <h2>How to Explore This Knowledge Base</h2>
+      
+      <div class="usage-steps">
+        <div class="usage-step">
+          <div class="step-number">1</div>
+          <h3>Browse by Category</h3>
+          <p>Start with your area of interest—engineering, cognitive science, statistics, or product management.</p>
+        </div>
+        
+        <div class="usage-step">
+          <div class="step-number">2</div>
+          <h3>Follow the Connections</h3>
+          <p>Each concept links to related ideas. Follow these connections to discover new perspectives.</p>
+        </div>
+        
+        <div class="usage-step">
+          <div class="step-number">3</div>
+          <h3>Explore the Bridges</h3>
+          <p>Look for concepts that bridge disciplines—these often provide the most innovative insights.</p>
+        </div>
+        
+        <div class="usage-step">
+          <div class="step-number">4</div>
+          <h3>Apply to Your Work</h3>
+          <p>Use these concepts to improve decision-making, optimize user experiences, and solve complex problems.</p>
+        </div>
+      </div>
+    </section>
+  </div>
 </Layout>
 
+<script define:vars={{ concepts: allConcepts }}>
+  // Simple D3.js knowledge graph visualization
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('knowledge-graph');
+    if (!container) return;
+
+    // Create SVG
+    const svg = d3.select(container)
+      .append('svg')
+      .attr('width', '100%')
+      .attr('height', '400')
+      .attr('viewBox', '0 0 800 400');
+
+    // Create simulation
+    const simulation = d3.forceSimulation(concepts)
+      .force('link', d3.forceLink().id(d => d.id).distance(100))
+      .force('charge', d3.forceManyBody().strength(-300))
+      .force('center', d3.forceCenter(400, 200))
+      .force('collision', d3.forceCollide().radius(20));
+
+    // Create links
+    const links = [];
+    concepts.forEach(concept => {
+      concept.related?.forEach(relatedId => {
+        const relatedConcept = concepts.find(c => c.id === relatedId);
+        if (relatedConcept) {
+          links.push({ source: concept.id, target: relatedId });
+        }
+      });
+      if (concept.bridgeFrom) {
+        const bridgeConcept = concepts.find(c => c.id === concept.bridgeFrom);
+        if (bridgeConcept) {
+          links.push({ source: concept.bridgeFrom, target: concept.id, type: 'bridge' });
+        }
+      }
+    });
+
+    const link = svg.append('g')
+      .selectAll('line')
+      .data(links)
+      .enter().append('line')
+      .attr('stroke', d => d.type === 'bridge' ? '#10b981' : '#6b7280')
+      .attr('stroke-width', d => d.type === 'bridge' ? 2 : 1)
+      .attr('stroke-opacity', 0.6);
+
+    // Create nodes
+    const node = svg.append('g')
+      .selectAll('circle')
+      .data(concepts)
+      .enter().append('circle')
+      .attr('r', d => Math.sqrt(d.importance || 5) * 3)
+      .attr('fill', d => {
+        const colors = {
+          'engineering': '#3b82f6',
+          'cognitive-science': '#8b5cf6',
+          'statistics': '#f59e0b',
+          'product': '#10b981',
+          'neuroai': '#ef4444'
+        };
+        return colors[d.category] || '#6b7280';
+      })
+      .attr('stroke', '#fff')
+      .attr('stroke-width', 2)
+      .style('cursor', 'pointer')
+      .call(d3.drag()
+        .on('start', dragstarted)
+        .on('drag', dragged)
+        .on('end', dragended))
+      .on('click', (event, d) => {
+        window.location.href = `/concepts/${d.id.replace('.md', '')}`;
+      });
+
+    // Add labels
+    const label = svg.append('g')
+      .selectAll('text')
+      .data(concepts)
+      .enter().append('text')
+      .text(d => d.term)
+      .attr('font-size', '10px')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.35em')
+      .style('pointer-events', 'none')
+      .style('fill', '#374151');
+
+    // Update positions
+    simulation.on('tick', () => {
+      link
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+
+      node
+        .attr('cx', d => d.x)
+        .attr('cy', d => d.y);
+
+      label
+        .attr('x', d => d.x)
+        .attr('y', d => d.y);
+    });
+
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+  });
+</script>
+
 <style>
-.concepts-page {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-.page-header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.page-header h1 {
-  font-size: 3rem;
-  color: #4A6741;
-  margin-bottom: 1rem;
-  font-weight: 700;
-}
-
-.subtitle {
-  font-size: 1.2rem;
-  color: #666;
-  max-width: 600px;
-  margin: 0 auto 2rem;
-  line-height: 1.6;
-}
-
-.concept-nav {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.graph-link, .posts-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-}
-
-.graph-link {
-  background: #4A6741;
-  color: white;
-}
-
-.graph-link:hover {
-  background: #2d4a2d;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(74, 103, 65, 0.3);
-}
-
-.posts-link {
-  background: #f8f9fa;
-  color: #4A6741;
-  border: 2px solid #4A6741;
-}
-
-.posts-link:hover {
-  background: #4A6741;
-  color: white;
-  transform: translateY(-2px);
-}
-
-.concepts-grid {
-  display: grid;
-  gap: 3rem;
-}
-
-.category-section {
-  border-left: 4px solid #4A6741;
-  padding-left: 2rem;
-}
-
-.category-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: #4A6741;
-  margin-bottom: 1.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.category-icon {
-  font-size: 1.25rem;
-}
-
-.concept-count {
-  background: #4A6741;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.concept-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 1.5rem;
-}
-
-.concept-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid #e5e5e5;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.concept-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #4A6741, #7CB342);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
-}
-
-.concept-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  transform: translateY(-4px);
-  border-color: #4A6741;
-}
-
-.concept-card:hover::before {
-  transform: scaleX(1);
-}
-
-.concept-card h3 {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.concept-card h3 a {
-  color: #333;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.concept-card h3 a:hover {
-  color: #4A6741;
-}
-
-.concept-definition {
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 1rem;
-  font-size: 0.95rem;
-}
-
-.bridge-indicator {
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #f0f7f0, #e8f5e8);
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  border-left: 3px solid #4A6741;
-}
-
-.bridge-label {
-  display: block;
-  font-size: 0.8rem;
-  color: #4A6741;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0.25rem;
-}
-
-.bridge-link {
-  color: #4A6741;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
-}
-
-.bridge-link:hover {
-  text-decoration: underline;
-}
-
-.concept-meta {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  font-size: 0.8rem;
-  color: #999;
-}
-
-.concept-meta span {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.5rem;
-  background: #f5f5f5;
-  border-radius: 12px;
-}
-
-.importance-indicator[data-importance="10"],
-.importance-indicator[data-importance="9"],
-.importance-indicator[data-importance="8"] {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.importance-indicator[data-importance="7"],
-.importance-indicator[data-importance="6"],
-.importance-indicator[data-importance="5"] {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-.page-footer {
-  text-align: center;
-  margin-top: 4rem;
-  padding: 2rem;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border-left: 4px solid #4A6741;
-}
-
-.footer-link {
-  color: #4A6741;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.footer-link:hover {
-  text-decoration: underline;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .page-header h1 {
-    color: #7CB342;
+  .concepts-index {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
   }
-  
-  .subtitle {
-    color: #ccc;
-  }
-  
-  .posts-link {
-    background: #2a2a2a;
-    color: #7CB342;
-    border-color: #7CB342;
-  }
-  
-  .posts-link:hover {
-    background: #7CB342;
-    color: #1a1a1a;
-  }
-  
-  .category-title {
-    color: #7CB342;
-  }
-  
-  .concept-count {
-    background: #7CB342;
-    color: #1a1a1a;
-  }
-  
-  .concept-card {
-    background: #2a2a2a;
-    border-color: #404040;
-    color: #e0e0e0;
-  }
-  
-  .concept-card:hover {
-    border-color: #7CB342;
-  }
-  
-  .concept-card::before {
-    background: linear-gradient(90deg, #7CB342, #9ccc65);
-  }
-  
-  .concept-card h3 a {
-    color: #e0e0e0;
-  }
-  
-  .concept-card h3 a:hover {
-    color: #7CB342;
-  }
-  
-  .concept-definition {
-    color: #ccc;
-  }
-  
-  .bridge-indicator {
-    background: linear-gradient(135deg, #1a2a1a, #2a3a2a);
-    border-left-color: #7CB342;
-  }
-  
-  .bridge-label {
-    color: #7CB342;
-  }
-  
-  .bridge-link {
-    color: #7CB342;
-  }
-  
-  .concept-meta span {
-    background: #404040;
-    color: #ccc;
-  }
-  
-  .page-footer {
-    background: #2a2a2a;
-    border-left-color: #7CB342;
-  }
-  
-  .footer-link {
-    color: #7CB342;
-  }
-}
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .concepts-page {
-    padding: 1rem;
+
+  .concepts-header {
+    text-align: center;
+    margin-bottom: 3rem;
   }
-  
-  .page-header h1 {
-    font-size: 2.5rem;
+
+  .concepts-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
   }
-  
-  .subtitle {
+
+  .concepts-subtitle {
+    font-size: 1.2rem;
+    color: #6b7280;
+    max-width: 800px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+  }
+
+  .concepts-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #4A6741;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .knowledge-graph-section {
+    margin: 4rem 0;
+    padding: 2rem;
+    background: #f9fafb;
+    border-radius: 12px;
+  }
+
+  .knowledge-graph-container {
+    margin: 2rem 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+  }
+
+  .graph-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .legend-color.engineering { background: #3b82f6; }
+  .legend-color.cognitive-science { background: #8b5cf6; }
+  .legend-color.statistics { background: #f59e0b; }
+  .legend-color.product { background: #10b981; }
+  .legend-color.neuroai { background: #ef4444; }
+
+  .concepts-categories {
+    margin: 4rem 0;
+  }
+
+  .concept-category {
+    margin-bottom: 4rem;
+  }
+
+  .category-header {
+    margin-bottom: 2rem;
+  }
+
+  .category-header h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .category-description {
+    color: #6b7280;
     font-size: 1.1rem;
   }
-  
-  .concept-nav {
-    flex-direction: column;
+
+  .concepts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .featured-bridges {
+    margin: 4rem 0;
+    padding: 2rem;
+    background: #f0f7f0;
+    border-radius: 12px;
+  }
+
+  .featured-bridges h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .bridges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .bridge-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .bridge-from,
+  .bridge-to {
+    font-weight: 600;
+    color: #4A6741;
+  }
+
+  .bridge-arrow {
+    font-size: 1.5rem;
+    color: #10b981;
+    margin: 0.5rem 0;
+  }
+
+  .bridge-description {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 1rem;
+  }
+
+  .usage-guide {
+    margin: 4rem 0;
+  }
+
+  .usage-guide h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .usage-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+  }
+
+  .usage-step {
+    text-align: center;
+  }
+
+  .step-number {
+    width: 3rem;
+    height: 3rem;
+    background: #4A6741;
+    color: white;
+    border-radius: 50%;
+    display: flex;
     align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin: 0 auto 1rem;
   }
-  
-  .concept-cards {
-    grid-template-columns: 1fr;
+
+  .usage-step h3 {
+    margin-bottom: 0.5rem;
+    color: #1f2937;
   }
-  
-  .category-section {
-    padding-left: 1rem;
+
+  .usage-step p {
+    color: #6b7280;
+    line-height: 1.6;
   }
-  
-  .concept-meta {
-    flex-direction: column;
-    gap: 0.5rem;
+
+  @media (max-width: 768px) {
+    .concepts-header h1 {
+      font-size: 2rem;
+    }
+    
+    .concepts-stats {
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .concepts-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .bridges-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .usage-steps {
+      grid-template-columns: 1fr;
+    }
   }
-}
 </style>

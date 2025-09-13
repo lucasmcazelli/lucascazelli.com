@@ -1,0 +1,1237 @@
+---
+import type { UnifiedGraph } from "@/utils/unifiedGraph";
+
+export interface Props {
+  graph: UnifiedGraph;
+  width?: number;
+  height?: number;
+  showTags?: boolean;
+  enablePhysics?: boolean;
+  centralNode?: string;
+}
+
+const { 
+  graph, 
+  width = 1200, 
+  height = 800, 
+  showTags = true, 
+  enablePhysics = true,
+  centralNode 
+} = Astro.props;
+
+// Filter nodes based on showTags
+const filteredNodes = showTags 
+  ? graph.nodes 
+  : graph.nodes.filter(n => n.type !== 'tag');
+
+const filteredEdges = graph.edges.filter(edge => {
+  if (!showTags) {
+    return !edge.source.startsWith('tag-') && !edge.target.startsWith('tag-');
+  }
+  return true;
+});
+
+const graphData = {
+  nodes: filteredNodes,
+  edges: filteredEdges
+};
+
+// Import neural network styles
+import '@/styles/neural-graph.css';
+---
+
+<div class="obsidian-graph-container">
+  <!-- Graph Controls -->
+  <div class="graph-controls">
+    <div class="control-group">
+      <button id="reset-simulation" class="control-btn primary" title="Reset simulation (R)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M3 21v-5h5"/>
+        </svg>
+        Reset
+      </button>
+      
+      <button id="fit-to-view" class="control-btn" title="Fit all nodes to view (0)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
+        </svg>
+        Fit All
+      </button>
+      
+      <button id="zoom-in" class="control-btn" title="Zoom in (+/=)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+          <line x1="11" y1="8" x2="11" y2="14"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+        Zoom In
+      </button>
+      
+      <button id="zoom-out" class="control-btn" title="Zoom out (-)">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+        Zoom Out
+      </button>
+      
+      <button id="toggle-physics" class="control-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 12l4 4 4-4"/>
+        </svg>
+        Physics
+      </button>
+      
+      <button id="toggle-tags" class="control-btn" data-active={showTags}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+          <line x1="7" y1="7" x2="7.01" y2="7"/>
+        </svg>
+        Tags
+      </button>
+    </div>
+    
+    <div class="control-group">
+      <select id="filter-type" class="control-select">
+        <option value="all">All Types</option>
+        <option value="post">Posts</option>
+        <option value="concept">Concepts</option>
+        <option value="tag">Tags</option>
+      </select>
+      
+      <select id="filter-category" class="control-select">
+        <option value="all">All Categories</option>
+        <option value="neuroscience">Neuroscience</option>
+        <option value="product">Product</option>
+        <option value="statistics">Statistics</option>
+        <option value="case-study">Case Study</option>
+        <option value="technical">Technical</option>
+        <option value="engineering">Engineering</option>
+        <option value="cognitive-science">Cognitive Science</option>
+      </select>
+      
+      <input 
+        id="search-nodes" 
+        type="text" 
+        placeholder="Search nodes..." 
+        class="control-input"
+      />
+    </div>
+    
+    <div class="control-group">
+      <label class="slider-label">
+        Connection Strength
+        <input id="connection-strength" type="range" min="0.1" max="2" step="0.1" value="1" class="control-slider" />
+      </label>
+      
+      <label class="slider-label">
+        Repulsion Force
+        <input id="repulsion-force" type="range" min="50" max="500" step="25" value="200" class="control-slider" />
+      </label>
+    </div>
+  </div>
+
+  <!-- Graph Stats -->
+  <div class="graph-stats">
+    <div class="stat-item">
+      <span class="stat-value" id="visible-nodes">{filteredNodes.length}</span>
+      <span class="stat-label">Nodes</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="visible-edges">{filteredEdges.length}</span>
+      <span class="stat-label">Edges</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-value" id="selected-node">None</span>
+      <span class="stat-label">Selected</span>
+    </div>
+  </div>
+
+  <!-- Main Graph Container -->
+  <div class="graph-canvas-container">
+    <svg id="obsidian-graph" class="neural-graph" width={width} height={height}></svg>
+    
+    <!-- Node Info Panel -->
+    <div id="node-info-panel" class="node-info-panel hidden">
+      <div class="node-info-header">
+        <h3 id="node-title"></h3>
+        <button id="close-info-panel">×</button>
+      </div>
+      <div class="node-info-content">
+        <div id="node-details"></div>
+        <div id="node-connections"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph Legend -->
+  <div class="graph-legend">
+    <div class="legend-section">
+      <h4>Node Types</h4>
+      <div class="legend-items">
+        <div class="legend-item">
+          <div class="legend-node post"></div>
+          <span>Blog Posts</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-node concept"></div>
+          <span>Concepts</span>
+        </div>
+        {showTags && (
+          <div class="legend-item">
+            <div class="legend-node tag"></div>
+            <span>Tags</span>
+          </div>
+        )}
+      </div>
+    </div>
+    
+    <div class="legend-section">
+      <h4>Connections</h4>
+      <div class="legend-items">
+        <div class="legend-item">
+          <div class="legend-line connections"></div>
+          <span>Manual Links</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line bridges"></div>
+          <span>Bridge Concepts</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line related"></div>
+          <span>Related</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-line tags"></div>
+          <span>Shared Tags</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline define:vars={{ graphData, width, height, centralNode, enablePhysics }}>
+  // Load D3.js if not already loaded
+  if (typeof d3 === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://d3js.org/d3.v7.min.js';
+    script.onload = initObsidianGraph;
+    document.head.appendChild(script);
+  } else {
+    initObsidianGraph();
+  }
+
+  function initObsidianGraph() {
+    // Color schemes for different node types and categories
+    const nodeColors = {
+      post: {
+        'neuroscience': '#8B5CF6',
+        'product': '#3B82F6', 
+        'statistics': '#10B981',
+        'case-study': '#F59E0B',
+        'technical': '#EF4444',
+        'default': '#6B7280'
+      },
+      concept: {
+        'engineering': '#EC4899',
+        'cognitive-science': '#8B5CF6',
+        'statistics': '#10B981',
+        'product': '#3B82F6',
+        'neuroai': '#F59E0B',
+        'default': '#6366F1'
+      },
+      tag: '#94A3B8'
+    };
+
+    const edgeColors = {
+      'connections': '#3B82F6',
+      'bridges': '#EC4899',
+      'related': '#10B981',
+      'mentions': '#9CA3AF',
+      'references': '#F59E0B',
+      'tags': '#94A3B8',
+      'backlinks': '#8B5CF6'
+    };
+
+    // Initialize SVG and containers
+    const svg = d3.select('#obsidian-graph');
+    
+    // Create zoom behavior
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        graphGroup.attr('transform', event.transform);
+      });
+    
+    svg.call(zoom);
+    
+    // Create main graph group
+    const graphGroup = svg.append('g').attr('class', 'graph-group');
+    
+    // Create layers for different elements
+    const edgeLayer = graphGroup.append('g').attr('class', 'edges');
+    const nodeLayer = graphGroup.append('g').attr('class', 'nodes');
+    const labelLayer = graphGroup.append('g').attr('class', 'labels');
+
+    // Initialize simulation
+    let simulation = d3.forceSimulation(graphData.nodes)
+      .force('link', d3.forceLink(graphData.edges)
+        .id(d => d.id)
+        .distance(d => {
+          // Dynamic distance based on connection strength
+          const baseDistance = 100;
+          const strengthMultiplier = 1 / Math.max(d.strength, 0.1);
+          return baseDistance * strengthMultiplier;
+        })
+        .strength(d => Math.min(d.strength * 0.3, 1))
+      )
+      .force('charge', d3.forceManyBody()
+        .strength(d => {
+          // Stronger repulsion for more connected nodes
+          const baseStrength = -200;
+          const connectionMultiplier = 1 + (d.connectionCount || 0) * 0.1;
+          return baseStrength * connectionMultiplier;
+        })
+      )
+      .force('center', d3.forceCenter(width / 2, height / 2))
+      .force('collision', d3.forceCollide()
+        .radius(d => {
+          const baseRadius = d.type === 'tag' ? 15 : 20;
+          const importanceMultiplier = Math.sqrt((d.importance || 1) / 5);
+          return baseRadius * importanceMultiplier + 5;
+        })
+      );
+
+    // Create edges with neural styling
+    let edges = edgeLayer.selectAll('.edge')
+      .data(graphData.edges)
+      .enter().append('line')
+      .attr('class', d => `edge ${d.type}`)
+      .attr('stroke', d => edgeColors[d.type] || '#9CA3AF')
+      .attr('stroke-width', d => Math.sqrt(d.strength) * 2 + 0.5)
+      .attr('stroke-opacity', d => Math.min(d.strength * 0.6 + 0.2, 0.8))
+      .attr('data-strength', d => {
+        if (d.strength >= 2) return 'very-strong';
+        if (d.strength >= 1) return 'strong';
+        if (d.strength >= 0.5) return 'medium';
+        return 'weak';
+      })
+      .style('--edge-index', (_d, i) => i);
+
+    // Create nodes with neural styling
+    let nodes = nodeLayer.selectAll('.node')
+      .data(graphData.nodes)
+      .enter().append('g')
+      .attr('class', d => `node ${d.type}`)
+      .style('--node-index', (_d, i) => i)
+      .call(d3.drag()
+        .on('start', dragstarted)
+        .on('drag', dragged)
+        .on('end', dragended)
+      );
+
+    // Add node circles
+    nodes.append('circle')
+      .attr('r', d => {
+        const baseRadius = d.type === 'tag' ? 8 : 12;
+        const importanceMultiplier = Math.sqrt((d.importance || 1) / 5);
+        const connectionMultiplier = Math.sqrt((d.connectionCount || 1) / 10);
+        return baseRadius * importanceMultiplier * connectionMultiplier + 4;
+      })
+      .attr('fill', d => {
+        if (d.type === 'tag') return nodeColors.tag;
+        return nodeColors[d.type]?.[d.category] || nodeColors[d.type]?.default || '#6B7280';
+      })
+      .attr('stroke', '#ffffff')
+      .attr('stroke-width', 2)
+      .style('filter', 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))')
+      .style('cursor', 'pointer');
+
+    // Add node labels
+    const labels = labelLayer.selectAll('.label')
+      .data(graphData.nodes)
+      .enter().append('text')
+      .attr('class', 'label')
+      .text(d => {
+        if (d.type === 'tag') return d.label;
+        return d.label.length > 25 ? d.label.substring(0, 25) + '...' : d.label;
+      })
+      .attr('text-anchor', 'middle')
+      .attr('dy', d => {
+        const baseRadius = d.type === 'tag' ? 8 : 12;
+        const importanceMultiplier = Math.sqrt((d.importance || 1) / 5);
+        const connectionMultiplier = Math.sqrt((d.connectionCount || 1) / 10);
+        return (baseRadius * importanceMultiplier * connectionMultiplier + 4) + 16;
+      })
+      .style('font-size', d => d.type === 'tag' ? '10px' : '12px')
+      .style('font-weight', d => d.type === 'tag' ? '400' : '500')
+      .style('fill', 'var(--color-foreground)')
+      .style('pointer-events', 'none')
+      .style('user-select', 'none');
+
+    // Node interaction handlers
+    nodes
+      .on('click', handleNodeClick)
+      .on('mouseover', handleNodeHover)
+      .on('mouseout', handleNodeOut);
+
+    // Update simulation on tick
+    simulation.on('tick', () => {
+      edges
+        .attr('x1', d => d.source.x)
+        .attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x)
+        .attr('y2', d => d.target.y);
+
+      nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+      labels.attr('transform', d => `translate(${d.x},${d.y})`);
+    });
+
+    // Drag functions with neural effects
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+      
+      // Add dragging class for neural effects
+      d3.select(event.sourceEvent.target.parentNode)
+        .classed('dragging', true);
+    }
+
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+      
+      // Remove dragging class
+      d3.select(event.sourceEvent.target.parentNode)
+        .classed('dragging', false);
+    }
+
+    // Node interaction functions
+    function handleNodeClick(event, d) {
+      event.stopPropagation();
+      
+      // Update selected node display
+      document.getElementById('selected-node').textContent = d.label;
+      
+      // Show node info panel
+      showNodeInfo(d);
+      
+      // Highlight connected nodes
+      highlightConnectedNodes(d);
+    }
+
+    function handleNodeHover(event, d) {
+      // Enhance node appearance
+      d3.select(event.currentTarget).select('circle')
+        .transition().duration(200)
+        .attr('stroke-width', 4)
+        .style('filter', 'drop-shadow(0px 4px 8px rgba(0,0,0,0.2))');
+        
+      // Show tooltip
+      showTooltip(event, d);
+    }
+
+    function handleNodeOut(event, _d) {
+      // Reset node appearance
+      d3.select(event.currentTarget).select('circle')
+        .transition().duration(200)
+        .attr('stroke-width', 2)
+        .style('filter', 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))');
+        
+      // Hide tooltip
+      hideTooltip();
+    }
+
+    function highlightConnectedNodes(selectedNode) {
+      const connectedNodeIds = new Set();
+      const connectedEdges = new Set();
+      
+      // Find all connected nodes and edges
+      graphData.edges.forEach(edge => {
+        if (edge.source.id === selectedNode.id || edge.target.id === selectedNode.id) {
+          connectedEdges.add(edge);
+          connectedNodeIds.add(edge.source.id === selectedNode.id ? edge.target.id : edge.source.id);
+        }
+      });
+      
+      // Add neural network highlighting effects
+      nodes
+        .classed('selected', d => d.id === selectedNode.id)
+        .classed('highlighted', d => connectedNodeIds.has(d.id))
+        .classed('dimmed', d => d.id !== selectedNode.id && !connectedNodeIds.has(d.id));
+      
+      edges
+        .classed('highlighted', d => connectedEdges.has(d))
+        .classed('active', d => connectedEdges.has(d))
+        .style('opacity', d => connectedEdges.has(d) ? 1 : 0.1);
+      
+      labels.style('opacity', d => 
+        d.id === selectedNode.id || connectedNodeIds.has(d.id) ? 1 : 0.2
+      );
+      
+      // Trigger neural firing animation
+      setTimeout(() => {
+        edges.filter(d => connectedEdges.has(d))
+          .style('animation', 'synaptic-fire 1s ease-in-out');
+      }, 100);
+    }
+
+    function resetHighlights() {
+      // Reset neural network classes and styles
+      nodes
+        .classed('selected', false)
+        .classed('highlighted', false)
+        .classed('dimmed', false)
+        .style('opacity', 1);
+      
+      edges
+        .classed('highlighted', false)
+        .classed('active', false)
+        .style('opacity', d => Math.min(d.strength * 0.6 + 0.2, 0.8))
+        .style('animation', null);
+      
+      labels.style('opacity', 1);
+    }
+
+    function showNodeInfo(node) {
+      const panel = document.getElementById('node-info-panel');
+      const title = document.getElementById('node-title');
+      const details = document.getElementById('node-details');
+      const connections = document.getElementById('node-connections');
+      
+      title.textContent = node.label;
+      
+      // Show node details
+      let detailsHTML = `
+        <div class="node-detail">
+          <strong>Type:</strong> ${node.type.charAt(0).toUpperCase() + node.type.slice(1)}
+        </div>
+        <div class="node-detail">
+          <strong>Category:</strong> ${node.category || 'None'}
+        </div>
+        <div class="node-detail">
+          <strong>Connections:</strong> ${node.connectionCount || 0}
+        </div>
+      `;
+      
+      if (node.definition) {
+        detailsHTML += `
+          <div class="node-detail">
+            <strong>Definition:</strong> ${node.definition}
+          </div>
+        `;
+      }
+      
+      if (node.date) {
+        detailsHTML += `
+          <div class="node-detail">
+            <strong>Published:</strong> ${new Date(node.date).toLocaleDateString()}
+          </div>
+        `;
+      }
+      
+      details.innerHTML = detailsHTML;
+      
+      // Show connected nodes
+      const connectedNodes = [];
+      graphData.edges.forEach(edge => {
+        if (edge.source.id === node.id) {
+          connectedNodes.push({ node: edge.target, type: edge.type, strength: edge.strength });
+        } else if (edge.target.id === node.id) {
+          connectedNodes.push({ node: edge.source, type: edge.type, strength: edge.strength });
+        }
+      });
+      
+      let connectionsHTML = '<h4>Connected Nodes:</h4>';
+      if (connectedNodes.length === 0) {
+        connectionsHTML += '<p class="no-connections">No connections found</p>';
+      } else {
+        connectedNodes
+          .sort((a, b) => b.strength - a.strength)
+          .slice(0, 10)
+          .forEach(({ node: connectedNode, type, strength }) => {
+            connectionsHTML += `
+              <div class="connection-item">
+                <a href="${connectedNode.url}" class="connection-link">
+                  ${connectedNode.label}
+                </a>
+                <span class="connection-type">${type}</span>
+                <span class="connection-strength">${strength.toFixed(2)}</span>
+              </div>
+            `;
+          });
+      }
+      
+      connections.innerHTML = connectionsHTML;
+      panel.classList.remove('hidden');
+    }
+
+    let tooltip;
+    
+    function showTooltip(event, d) {
+      if (!tooltip) {
+        tooltip = d3.select('body').append('div')
+          .attr('class', 'graph-tooltip')
+          .style('opacity', 0);
+      }
+      
+      tooltip.html(`
+        <div class="tooltip-title">${d.label}</div>
+        <div class="tooltip-details">
+          <div><strong>Type:</strong> ${d.type}</div>
+          <div><strong>Connections:</strong> ${d.connectionCount || 0}</div>
+          ${d.definition ? `<div><strong>Definition:</strong> ${d.definition.substring(0, 100)}...</div>` : ''}
+        </div>
+      `)
+      .style('left', (event.pageX + 10) + 'px')
+      .style('top', (event.pageY - 10) + 'px')
+      .transition()
+      .duration(200)
+      .style('opacity', 1);
+    }
+    
+    function hideTooltip() {
+      if (tooltip) {
+        tooltip.transition()
+          .duration(200)
+          .style('opacity', 0);
+      }
+    }
+
+    // Control handlers
+    document.getElementById('reset-simulation')?.addEventListener('click', () => {
+      simulation.alpha(1).restart();
+      resetHighlights();
+      document.getElementById('node-info-panel').classList.add('hidden');
+      document.getElementById('selected-node').textContent = 'None';
+    });
+
+    document.getElementById('fit-to-view')?.addEventListener('click', () => {
+      fitGraphToView();
+    });
+
+    document.getElementById('zoom-in')?.addEventListener('click', () => {
+      zoomIn();
+    });
+
+    document.getElementById('zoom-out')?.addEventListener('click', () => {
+      zoomOut();
+    });
+
+    document.getElementById('toggle-physics')?.addEventListener('click', (event) => {
+      const button = event.target.closest('button');
+      const isActive = button.classList.contains('active');
+      
+      if (isActive) {
+        simulation.stop();
+        button.classList.remove('active');
+      } else {
+        simulation.restart();
+        button.classList.add('active');
+      }
+    });
+
+    document.getElementById('close-info-panel')?.addEventListener('click', () => {
+      document.getElementById('node-info-panel').classList.add('hidden');
+      resetHighlights();
+      document.getElementById('selected-node').textContent = 'None';
+    });
+
+    // Filter handlers
+    document.getElementById('filter-type')?.addEventListener('change', (event) => {
+      const filterType = event.target.value;
+      
+      nodes.style('display', d => 
+        filterType === 'all' || d.type === filterType ? 'block' : 'none'
+      );
+      
+      labels.style('display', d => 
+        filterType === 'all' || d.type === filterType ? 'block' : 'none'
+      );
+      
+      edges.style('display', d => {
+        const sourceVisible = filterType === 'all' || d.source.type === filterType;
+        const targetVisible = filterType === 'all' || d.target.type === filterType;
+        return sourceVisible && targetVisible ? 'block' : 'none';
+      });
+      
+      updateStats();
+    });
+
+    document.getElementById('filter-category')?.addEventListener('change', (event) => {
+      const filterCategory = event.target.value;
+      
+      nodes.style('display', d => 
+        filterCategory === 'all' || d.category === filterCategory ? 'block' : 'none'
+      );
+      
+      labels.style('display', d => 
+        filterCategory === 'all' || d.category === filterCategory ? 'block' : 'none'
+      );
+      
+      updateStats();
+    });
+
+    document.getElementById('search-nodes')?.addEventListener('input', (event) => {
+      const query = event.target.value.toLowerCase();
+      
+      nodes.style('display', d => {
+        const matchesLabel = d.label.toLowerCase().includes(query);
+        const matchesTags = d.tags?.some(tag => tag.toLowerCase().includes(query));
+        const matchesDefinition = d.definition?.toLowerCase().includes(query);
+        
+        return query === '' || matchesLabel || matchesTags || matchesDefinition ? 'block' : 'none';
+      });
+      
+      labels.style('display', d => {
+        const matchesLabel = d.label.toLowerCase().includes(query);
+        const matchesTags = d.tags?.some(tag => tag.toLowerCase().includes(query));
+        const matchesDefinition = d.definition?.toLowerCase().includes(query);
+        
+        return query === '' || matchesLabel || matchesTags || matchesDefinition ? 'block' : 'none';
+      });
+      
+      updateStats();
+    });
+
+    // Slider handlers
+    document.getElementById('connection-strength')?.addEventListener('input', (event) => {
+      const strength = parseFloat(event.target.value);
+      
+      simulation.force('link').strength(d => Math.min(d.strength * strength * 0.3, 1));
+      simulation.alpha(0.3).restart();
+    });
+
+    document.getElementById('repulsion-force')?.addEventListener('input', (event) => {
+      const force = parseInt(event.target.value);
+      
+      simulation.force('charge').strength(d => {
+        const baseStrength = -force;
+        const connectionMultiplier = 1 + (d.connectionCount || 0) * 0.1;
+        return baseStrength * connectionMultiplier;
+      });
+      simulation.alpha(0.3).restart();
+    });
+
+    function updateStats() {
+      const visibleNodes = nodes.nodes().filter(node => 
+        d3.select(node).style('display') !== 'none'
+      ).length;
+      
+      const visibleEdges = edges.nodes().filter(edge => 
+        d3.select(edge).style('display') !== 'none'
+      ).length;
+      
+      document.getElementById('visible-nodes').textContent = visibleNodes;
+      document.getElementById('visible-edges').textContent = visibleEdges;
+    }
+
+    // Zoom and fit-to-view functions
+    function fitGraphToView() {
+      // Wait for simulation to settle, then fit to view
+      setTimeout(() => {
+        const bounds = getGraphBounds();
+        const fullWidth = width;
+        const fullHeight = height;
+        const widthScale = fullWidth / bounds.width;
+        const heightScale = fullHeight / bounds.height;
+        const scale = Math.min(widthScale, heightScale) * 0.8; // 80% to add some padding
+        
+        const translate = [
+          fullWidth / 2 - scale * (bounds.x + bounds.width / 2),
+          fullHeight / 2 - scale * (bounds.y + bounds.height / 2)
+        ];
+        
+        const transform = d3.zoomIdentity
+          .translate(translate[0], translate[1])
+          .scale(scale);
+        
+        svg.transition()
+          .duration(750)
+          .call(zoom.transform, transform);
+      }, 100);
+    }
+
+    function getGraphBounds() {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      
+      graphData.nodes.forEach(node => {
+        if (node.x !== undefined && node.y !== undefined) {
+          minX = Math.min(minX, node.x);
+          minY = Math.min(minY, node.y);
+          maxX = Math.max(maxX, node.x);
+          maxY = Math.max(maxY, node.y);
+        }
+      });
+      
+      // Add padding
+      const padding = 50;
+      return {
+        x: minX - padding,
+        y: minY - padding,
+        width: (maxX - minX) + 2 * padding,
+        height: (maxY - minY) + 2 * padding
+      };
+    }
+
+    function zoomIn() {
+      const currentTransform = d3.zoomTransform(svg.node());
+      const newScale = Math.min(currentTransform.k * 1.5, 4); // Max zoom 4x
+      
+      const transform = d3.zoomIdentity
+        .translate(currentTransform.x, currentTransform.y)
+        .scale(newScale);
+      
+      svg.transition()
+        .duration(300)
+        .call(zoom.transform, transform);
+    }
+
+    function zoomOut() {
+      const currentTransform = d3.zoomTransform(svg.node());
+      const newScale = Math.max(currentTransform.k / 1.5, 0.1); // Min zoom 0.1x
+      
+      const transform = d3.zoomIdentity
+        .translate(currentTransform.x, currentTransform.y)
+        .scale(newScale);
+      
+      svg.transition()
+        .duration(300)
+        .call(zoom.transform, transform);
+    }
+
+    // Click outside to reset highlights
+    svg.on('click', () => {
+      resetHighlights();
+      document.getElementById('node-info-panel').classList.add('hidden');
+      document.getElementById('selected-node').textContent = 'None';
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (event) => {
+      // Only handle shortcuts when the graph container is focused or when no input is focused
+      const activeElement = document.activeElement;
+      const isInputFocused = activeElement && (
+        activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' || 
+        activeElement.contentEditable === 'true'
+      );
+      
+      if (isInputFocused) return;
+      
+      switch(event.key) {
+        case '=':
+        case '+':
+          event.preventDefault();
+          zoomIn();
+          break;
+        case '-':
+          event.preventDefault();
+          zoomOut();
+          break;
+        case '0':
+          event.preventDefault();
+          fitGraphToView();
+          break;
+        case 'r':
+          event.preventDefault();
+          simulation.alpha(1).restart();
+          resetHighlights();
+          break;
+      }
+    });
+
+    // Initialize physics state
+    if (enablePhysics) {
+      document.getElementById('toggle-physics')?.classList.add('active');
+    } else {
+      simulation.stop();
+    }
+
+    // Initial fit-to-view or focus on central node
+    if (centralNode) {
+      const node = graphData.nodes.find(n => n.id === centralNode);
+      if (node) {
+        setTimeout(() => {
+          const transform = d3.zoomIdentity
+            .translate(width / 2 - node.x, height / 2 - node.y)
+            .scale(1.5);
+          svg.transition().duration(1000).call(zoom.transform, transform);
+          handleNodeClick({ stopPropagation: () => {} }, node);
+        }, 1000);
+      }
+    } else {
+      // Auto-fit to view when graph loads
+      setTimeout(() => {
+        fitGraphToView();
+      }, 1500); // Wait for simulation to settle
+    }
+  }
+</script>
+
+<style>
+  .obsidian-graph-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-background);
+    border: 1px solid var(--color-muted);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .graph-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 16px;
+    background: var(--color-muted-background);
+    border-bottom: 1px solid var(--color-muted);
+    align-items: center;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .control-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: var(--color-background);
+    border: 1px solid var(--color-muted);
+    border-radius: 6px;
+    color: var(--color-foreground);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .control-btn:hover {
+    background: var(--color-muted);
+  }
+
+  .control-btn.primary {
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
+    border-color: var(--color-accent);
+  }
+
+  .control-btn.active {
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
+    border-color: var(--color-accent);
+  }
+
+  .control-select,
+  .control-input {
+    padding: 8px 12px;
+    background: var(--color-background);
+    border: 1px solid var(--color-muted);
+    border-radius: 6px;
+    color: var(--color-foreground);
+    font-size: 14px;
+    min-width: 140px;
+  }
+
+  .control-input {
+    min-width: 200px;
+  }
+
+  .slider-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--color-muted-foreground);
+  }
+
+  .control-slider {
+    width: 100px;
+  }
+
+  .graph-stats {
+    display: flex;
+    gap: 24px;
+    padding: 12px 16px;
+    background: var(--color-muted-background);
+    border-bottom: 1px solid var(--color-muted);
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-accent);
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--color-muted-foreground);
+  }
+
+  .graph-canvas-container {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  #obsidian-graph {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, 
+      rgba(var(--color-accent-rgb), 0.03) 0%, 
+      transparent 50%);
+  }
+
+  .node-info-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    max-height: calc(100% - 40px);
+    background: var(--color-background);
+    border: 1px solid var(--color-muted);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 10;
+  }
+
+  .node-info-panel.hidden {
+    display: none;
+  }
+
+  .node-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: var(--color-muted-background);
+    border-bottom: 1px solid var(--color-muted);
+  }
+
+  .node-info-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--color-foreground);
+  }
+
+  #close-info-panel {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: var(--color-muted-foreground);
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .node-info-content {
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 400px;
+  }
+
+  .node-detail {
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .connection-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--color-muted);
+    font-size: 13px;
+  }
+
+  .connection-link {
+    flex: 1;
+    color: var(--color-accent);
+    text-decoration: none;
+    margin-right: 8px;
+  }
+
+  .connection-link:hover {
+    text-decoration: underline;
+  }
+
+  .connection-type {
+    padding: 2px 6px;
+    background: var(--color-muted);
+    border-radius: 4px;
+    font-size: 11px;
+    margin-right: 8px;
+  }
+
+  .connection-strength {
+    font-weight: 600;
+    color: var(--color-accent);
+    min-width: 40px;
+    text-align: right;
+  }
+
+  .graph-legend {
+    display: flex;
+    gap: 32px;
+    padding: 16px;
+    background: var(--color-muted-background);
+    border-top: 1px solid var(--color-muted);
+    font-size: 12px;
+  }
+
+  .legend-section h4 {
+    margin: 0 0 8px 0;
+    color: var(--color-foreground);
+    font-size: 13px;
+  }
+
+  .legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-muted-foreground);
+  }
+
+  .legend-node {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+  }
+
+  .legend-node.post {
+    background: #3B82F6;
+  }
+
+  .legend-node.concept {
+    background: #6366F1;
+  }
+
+  .legend-node.tag {
+    background: #94A3B8;
+  }
+
+  .legend-line {
+    width: 20px;
+    height: 2px;
+  }
+
+  .legend-line.connections {
+    background: #3B82F6;
+  }
+
+  .legend-line.bridges {
+    background: #EC4899;
+  }
+
+  .legend-line.related {
+    background: #10B981;
+  }
+
+  .legend-line.tags {
+    background: #94A3B8;
+  }
+
+  :global(.graph-tooltip) {
+    position: absolute;
+    background: var(--color-background);
+    border: 1px solid var(--color-muted);
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    pointer-events: none;
+    z-index: 1000;
+    max-width: 250px;
+  }
+
+  :global(.graph-tooltip .tooltip-title) {
+    font-weight: 600;
+    color: var(--color-foreground);
+    margin-bottom: 6px;
+  }
+
+  :global(.graph-tooltip .tooltip-details div) {
+    margin-bottom: 3px;
+    color: var(--color-muted-foreground);
+  }
+
+  /* Neural network-style animations */
+  @keyframes pulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  :global(.edge) {
+    animation: pulse 3s ease-in-out infinite;
+    animation-delay: calc(var(--edge-index, 0) * 0.1s);
+  }
+
+  :global(.node circle) {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  :global(.node:hover circle) {
+    transform: scale(1.1);
+  }
+
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .graph-controls {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .control-group {
+      justify-content: space-between;
+    }
+
+    .node-info-panel {
+      width: calc(100% - 40px);
+      max-width: 300px;
+    }
+
+    .graph-legend {
+      flex-direction: column;
+      gap: 16px;
+    }
+  }
+</style>
