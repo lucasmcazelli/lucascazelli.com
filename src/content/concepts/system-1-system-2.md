@@ -10,7 +10,7 @@ examples:
   - context: "User Experience"
     description: "System 1 drives instant app icon recognition, while System 2 processes complex onboarding flows"
 formula: "Total Cognitive Capacity = System 1 (Automatic) + System 2 (Controlled)"
-visualization: "@/assets/images/concepts/system1-system2.svg"
+visualization: "../../assets/images/concepts/system1-system2.svg"
 weight: 5
 importance: 9
 cluster: "cognitive-science"

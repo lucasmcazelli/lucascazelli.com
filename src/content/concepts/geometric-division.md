@@ -11,7 +11,7 @@ examples:
   - context: "Video Analytics"
     description: "Splitting a 2-minute video into 120 one-second segments for attention analysis"
 formula: "∑(elements) = Total Structure"
-visualization: "@/assets/images/concepts/geometric-division.svg"
+visualization: "../../assets/images/concepts/geometric-division.svg"
 weight: 3
 importance: 7
 cluster: "engineering-foundations"

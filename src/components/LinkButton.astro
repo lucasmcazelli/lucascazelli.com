@@ -18,8 +18,8 @@ const {
 } = Astro.props;
 ---
 
-{
-  disabled ? (
+<>
+  {disabled ? (
     <span
       id={id}
       class:list={["group inline-block", className]}
@@ -38,5 +38,5 @@ const {
     >
       <slot />
     </a>
-  )
-}
+  )}
+</>

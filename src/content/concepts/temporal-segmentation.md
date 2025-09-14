@@ -11,7 +11,7 @@ examples:
   - context: "User Onboarding"
     description: "Breaking a 5-minute setup process into 30-second steps to optimize completion rates"
 formula: "Total Content = Σ(Segment₁ + Segment₂ + ... + Segmentₙ)"
-visualization: "@/assets/images/concepts/temporal-segmentation.svg"
+visualization: "../../assets/images/concepts/temporal-segmentation.svg"
 weight: 4
 importance: 7
 cluster: "attention-science"

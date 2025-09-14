@@ -1,0 +1,64 @@
+---
+title: "Testing Auto-Concept Highlighting"
+description: "A test post to verify that concept terms are automatically highlighted in blog post text."
+pubDatetime: 2024-12-12T12:00:00Z
+modDatetime: 2024-12-12T12:00:00Z
+featured: false
+draft: false
+tags: ["test", "concepts", "auto-highlighting"]
+category: "technical"
+importance: 3
+connections: []
+backlinks: []
+relatedPosts: []
+cluster: "testing"
+---
+
+# Testing Auto-Concept Highlighting
+
+This post tests the automatic highlighting of concept terms in blog post text.
+
+## What Should Be Highlighted
+
+The following terms should be automatically highlighted when they appear in the text:
+
+### Engineering Concepts
+- **Geometric Division**: This is a fundamental concept in finite element analysis where we break down complex structures into smaller elements.
+- **Mesh generation**: Another term for geometric division, this process creates computational grids.
+- **Discretization**: The mathematical process of converting continuous problems into discrete ones.
+
+### Cognitive Science Concepts  
+- **Cognitive Load Distribution**: This describes how mental effort is allocated across different cognitive systems.
+- **Mental effort distribution**: An alternative term for the same concept.
+- **Attention allocation**: How we distribute our cognitive resources.
+
+## Testing Different Contexts
+
+### In Paragraphs
+When discussing engineering principles, geometric division becomes essential for understanding how complex structures are analyzed. Similarly, cognitive load distribution helps us understand how users process information in digital interfaces.
+
+### In Lists
+- Geometric division is used in structural analysis
+- Cognitive load distribution affects user experience design
+- Both concepts involve breaking down complex systems
+
+### In Code Context (Should NOT be highlighted)
+```javascript
+// geometric division should not be highlighted here
+function geometricDivision(value) {
+  return value / 2;
+}
+
+// cognitive load distribution should not be highlighted here
+const cognitiveLoadDistribution = calculateLoad();
+```
+
+## Expected Behavior
+
+1. **Automatic Detection**: Terms should be automatically detected and highlighted
+2. **Click Interaction**: Clicking highlighted terms should show a modal with concept preview
+3. **New Tab Option**: The modal should have an icon to open the concept page in a new tab
+4. **Code Exclusion**: Terms in code blocks should NOT be highlighted
+5. **Case Insensitive**: Both "Geometric Division" and "geometric division" should work
+
+Let's see if this auto-highlighting feature works correctly!

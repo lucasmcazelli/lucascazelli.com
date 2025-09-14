@@ -12,6 +12,26 @@
 			"continue": true
 		},
 		{
+			"src": "^/_server-islands/([^/]+?)/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/_image/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/api/concepts/list\\.json/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/api/concepts/([^/]+?)\\.json/?$",
+			"dest": "_render"
+		},
+		{
+			"src": "^/api/concepts/([^/]+?)/?$",
+			"dest": "_render"
+		},
+		{
 			"src": "^/.*$",
 			"dest": "/404.html",
 			"status": 404

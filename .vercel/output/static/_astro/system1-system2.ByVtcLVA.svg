@@ -1,0 +1,75 @@
+<svg width="400" height="300" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="system1Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="system2Gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1d4ed8;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f8fafc"/>
+  
+  <!-- Title -->
+  <text x="200" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#1e293b">
+    Dual-Process Theory: System 1 vs System 2
+  </text>
+  
+  <!-- System 1 -->
+  <rect x="50" y="60" width="140" height="200" fill="url(#system1Gradient)" rx="12"/>
+  <text x="120" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    System 1
+  </text>
+  <text x="120" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">
+    Fast & Automatic
+  </text>
+  
+  <!-- System 1 characteristics -->
+  <text x="70" y="130" font-family="Arial, sans-serif" font-size="11" fill="white">• Intuitive</text>
+  <text x="70" y="145" font-family="Arial, sans-serif" font-size="11" fill="white">• Emotional</text>
+  <text x="70" y="160" font-family="Arial, sans-serif" font-size="11" fill="white">• Pattern-based</text>
+  <text x="70" y="175" font-family="Arial, sans-serif" font-size="11" fill="white">• Effortless</text>
+  <text x="70" y="190" font-family="Arial, sans-serif" font-size="11" fill="white">• Prone to bias</text>
+  <text x="70" y="205" font-family="Arial, sans-serif" font-size="11" fill="white">• Always on</text>
+  <text x="70" y="220" font-family="Arial, sans-serif" font-size="11" fill="white">• Survival focused</text>
+  
+  <!-- System 2 -->
+  <rect x="210" y="60" width="140" height="200" fill="url(#system2Gradient)" rx="12"/>
+  <text x="280" y="85" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="white">
+    System 2
+  </text>
+  <text x="280" y="105" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">
+    Slow & Deliberate
+  </text>
+  
+  <!-- System 2 characteristics -->
+  <text x="230" y="130" font-family="Arial, sans-serif" font-size="11" fill="white">• Logical</text>
+  <text x="230" y="145" font-family="Arial, sans-serif" font-size="11" fill="white">• Analytical</text>
+  <text x="230" y="160" font-family="Arial, sans-serif" font-size="11" fill="white">• Rule-based</text>
+  <text x="230" y="175" font-family="Arial, sans-serif" font-size="11" fill="white">• Effortful</text>
+  <text x="230" y="190" font-family="Arial, sans-serif" font-size="11" fill="white">• Limited capacity</text>
+  <text x="230" y="205" font-family="Arial, sans-serif" font-size="11" fill="white">• Can override S1</text>
+  <text x="230" y="220" font-family="Arial, sans-serif" font-size="11" fill="white">• Problem-solving</text>
+  
+  <!-- Interaction arrow -->
+  <path d="M 190 160 L 210 160" stroke="#64748b" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  <text x="200" y="155" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#64748b">
+    Override
+  </text>
+  
+  <!-- Arrow marker -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"/>
+    </marker>
+  </defs>
+  
+  <!-- Examples box -->
+  <rect x="50" y="280" width="300" height="15" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1" rx="4"/>
+  <text x="200" y="290" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#64748b">
+    S1: "Metrics dropped 23%!" → S2: "Wait, n=247, check confidence intervals"
+  </text>
+</svg>

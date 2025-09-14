@@ -10,7 +10,7 @@ examples:
   - context: "SaaS Feature Adoption"
     description: "72% probability that feature increases adoption rate by 15% or more"
 formula: "P(θ|data) = P(data|θ) × P(θ) / P(data)"
-visualization: "@/assets/images/concepts/bayesian-ab-testing.svg"
+visualization: "../../assets/images/concepts/bayesian-ab-testing.svg"
 weight: 4
 importance: 8
 cluster: "statistical-methods"

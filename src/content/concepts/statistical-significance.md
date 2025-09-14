@@ -11,7 +11,7 @@ examples:
   - context: "Medical Research"
     description: "Clinical trials require p < 0.01 to demonstrate drug effectiveness with high confidence"
 formula: "p-value = P(observed data | null hypothesis is true)"
-visualization: "@/assets/images/concepts/statistical-significance.svg"
+visualization: "../../assets/images/concepts/statistical-significance.svg"
 weight: 4
 importance: 8
 cluster: "statistical-methods"

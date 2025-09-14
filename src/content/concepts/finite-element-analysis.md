@@ -11,7 +11,7 @@ examples:
   - context: "Product Development"
     description: "Breaking complex user journeys into discrete interaction points for optimization analysis"
 formula: "K × u = F (where K is stiffness matrix, u is displacement vector, F is force vector)"
-visualization: "@/assets/images/concepts/finite-element-analysis.svg"
+visualization: "../../assets/images/concepts/finite-element-analysis.svg"
 weight: 5
 importance: 9
 cluster: "engineering-fundamentals"

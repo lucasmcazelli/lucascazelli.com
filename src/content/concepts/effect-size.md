@@ -10,7 +10,7 @@ examples:
   - context: "Educational Research"
     description: "An effect size of 0.8 represents a large, practically meaningful difference in learning outcomes"
 formula: "Cohen's d = \\frac{\\bar{x}_1 - \\bar{x}_2}{s_{pooled}}"
-visualization: "@/assets/images/concepts/effect-size.svg"
+visualization: "../../assets/images/concepts/effect-size.svg"
 weight: 4
 importance: 8
 cluster: "statistical-methods"

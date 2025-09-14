@@ -1,0 +1,55 @@
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f8f9fa"/>
+  
+  <!-- Title -->
+  <text x="200" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">
+    Bayesian A/B Testing
+  </text>
+  
+  <!-- Prior Distribution -->
+  <g>
+    <text x="50" y="70" font-family="Arial, sans-serif" font-size="12" fill="#34495e">Prior Belief</text>
+    <path d="M 50 80 Q 100 60 150 80" stroke="#3498db" stroke-width="2" fill="none"/>
+    <circle cx="100" cy="68" r="3" fill="#3498db"/>
+  </g>
+  
+  <!-- Data -->
+  <g>
+    <text x="200" y="70" font-family="Arial, sans-serif" font-size="12" fill="#34495e">+ Data</text>
+    <rect x="220" y="80" width="20" height="30" fill="#e74c3c" opacity="0.7"/>
+    <rect x="245" y="75" width="20" height="35" fill="#e74c3c" opacity="0.7"/>
+    <rect x="270" y="85" width="20" height="25" fill="#e74c3c" opacity="0.7"/>
+  </g>
+  
+  <!-- Arrow -->
+  <path d="M 180 130 L 220 130" stroke="#2c3e50" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- Posterior Distribution -->
+  <g>
+    <text x="200" y="170" font-family="Arial, sans-serif" font-size="12" fill="#34495e">Posterior Distribution</text>
+    <path d="M 120 180 Q 200 150 280 180" stroke="#27ae60" stroke-width="3" fill="none"/>
+    <circle cx="200" cy="158" r="4" fill="#27ae60"/>
+  </g>
+  
+  <!-- Probability Statement -->
+  <g>
+    <rect x="50" y="220" width="300" height="60" fill="#ecf0f1" stroke="#bdc3c7" rx="5"/>
+    <text x="200" y="240" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">
+      85% probability that Treatment B
+    </text>
+    <text x="200" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#2c3e50">
+      improves conversion by 2-8%
+    </text>
+    <text x="200" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7f8c8d">
+      (vs. binary significant/not significant)
+    </text>
+  </g>
+  
+  <!-- Arrow marker definition -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+    </marker>
+  </defs>
+</svg>

@@ -11,7 +11,7 @@ examples:
   - context: "Video Analytics"
     description: "A 20% reduction in completion time that users consistently notice and appreciate shows high behavioral significance"
 formula: "Behavioral Significance = f(User Perception × Business Impact × Implementation Cost)"
-visualization: "@/assets/images/concepts/behavioral-significance.svg"
+visualization: "../../assets/images/concepts/behavioral-significance.svg"
 weight: 4
 importance: 8
 cluster: "statistical-methods"
